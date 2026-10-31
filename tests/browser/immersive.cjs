@@ -11,7 +11,7 @@ app.disableHardwareAcceleration();
 let win;
 app.whenReady().then(async () => {
   session.defaultSession.webRequest.onBeforeRequest({ urls: ['http://*/*', 'https://*/*'] }, (_, done) => done({ cancel: true }));
-  win = new BrowserWindow({ show: false, width: 900, height: 700, webPreferences: { backgroundThrottling: false } });
+  win = new BrowserWindow({ show: false, width: 900, height: 700, webPreferences: { backgroundThrottling: false, offscreen: true } });
   await win.loadURL('about:blank');
   const evaluate = code => win.webContents.executeJavaScript(code);
   const waitFor = async code => {
@@ -120,6 +120,43 @@ app.whenReady().then(async () => {
   win.webContents.debugger.detach();
   await evaluate(`disposers.reverse().splice(0).forEach(fn => fn()); window.PointerEvent = undefined; mount();`);
   await check(`['mousedown','mouseup'].forEach(type => document.getElementById('background').dispatchEvent(new MouseEvent(type, {bubbles:true, button:0, clientX:100, clientY:310}))); active()`, true, 'mouse-only fallback');
+  await evaluate(`
+    disposers.reverse().splice(0).forEach(fn => fn()); window.PointerEvent = PointerEvent;
+    document.body.innerHTML = '<div id="frame" style="display:grid;grid-template-columns:180px 1fr 160px;height:600px"><aside id="left">Sidebar</aside><div id="center" style="display:flex;flex-direction:column;min-height:0"><div data-slot="conversation.header"><header data-window-drag><div data-conversation-tabs>Tabs</div></header></div><main id="background" data-conversation-content data-conversation-region="chat" style="display:flex;flex:1;min-height:0"><div id="scroll" data-conversation-scroll style="overflow:auto;flex:1"><div data-slot="conversation.session"><div data-chat-flow id="flow" style="height:900px"><article data-chat-flow-kind="assistant-step" id="card"><span id="text">History record</span><button id="button">Copy</button></article><div role="status" id="notice">Session notice</div></div></div><div data-composer-seat><div data-composer-card id="composer">Input</div></div></div></main></div><aside data-rightbar-col id="right">Files</aside><div data-shell-overlay style="position:absolute;pointer-events:none"></div></div>';
+    const slotStyle = document.createElement('style'); slotStyle.textContent = '[data-slot] { display: contents !important; }'; document.head.append(slotStyle);
+    mount(); void 0;
+  `);
+  await check(`key('i', {altKey:true}); active()`, true, 'background mode enters');
+  await check(`['left','right'].map(id=>getComputedStyle(document.getElementById(id)).display)`, ['none','none'], 'both sidebars collapse');
+  await check(`getComputedStyle(document.getElementById('notice')).visibility`, 'hidden', 'session notices hide');
+  await check(`key('Escape'); ['left','right'].map(id=>getComputedStyle(document.getElementById(id)).display)`, ['block','block'], 'original sidebars restore');
+  await check(`document.getElementById('frame').style.gridTemplateColumns`, '180px 1fr 160px', 'saved sidebar widths never change');
+  await check(`key('I',{altKey:true,shiftKey:true}); document.body.classList.contains('yukimi-reading') && !active()`, true, 'reading hotkey keeps history');
+  await check(`getComputedStyle(document.getElementById('composer').parentElement).display`, 'none', 'reading removes input seat from layout');
+  await waitFor(`getComputedStyle(document.getElementById('card')).opacity === '1'`);
+  await waitFor(`document.getElementById('flow').hasAttribute('data-yukimi-history-fade')`);
+  await check(`(()=>{const center=document.getElementById('center').getBoundingClientRect(),scroll=document.getElementById('scroll').getBoundingClientRect();return Math.abs(center.top-scroll.top)<1 && Math.abs(center.bottom-scroll.bottom)<1;})()`, true, 'reading history reaches both content-window edges');
+  await check(`(()=>{const flow=document.getElementById('flow'),r=flow.getBoundingClientRect(),s=document.getElementById('scroll').getBoundingClientRect();return Math.abs(r.top+parseFloat(flow.style.getPropertyValue('--yukimi-fade-bottom'))-s.bottom)<1;})()`, true, 'reading fade ends at window bottom instead of input');
+  await check(`document.getElementById('scroll').dispatchEvent(new WheelEvent('wheel',{bubbles:true,deltaY:-30})); document.body.classList.contains('yukimi-reading')`, true, 'reading scroll does not exit');
+  // Mouse fallback is still selected after the earlier fallback test.
+  const down = id => evaluate(`document.getElementById('${id}').dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0,clientX:120,clientY:100}));void 0;`);
+  await down('card');
+  await waitFor(`!document.body.classList.contains('yukimi-reading')`);
+  await check(`active()`, false, 'second long press restores normal view');
+  await down('card');
+  await waitFor(`document.body.classList.contains('yukimi-reading')`);
+  await check(`getComputedStyle(document.getElementById('card')).pointerEvents`, 'auto', 'reading text remains interactive');
+  await evaluate(`key('Escape')`);
+  await down('button');
+  await new Promise(resolve=>setTimeout(resolve,700));
+  await check(`document.body.classList.contains('yukimi-reading')`, false, 'holding a button does not toggle reading');
+  await down('card');
+  await evaluate(`window.dispatchEvent(new MouseEvent('mousemove',{clientX:160,clientY:100}));void 0;`);
+  await new Promise(resolve=>setTimeout(resolve,700));
+  await check(`document.body.classList.contains('yukimi-reading')`, false, 'text selection drag cancels long press');
+  await evaluate(`key('I',{altKey:true,shiftKey:true}); disposers.reverse().splice(0).forEach(fn=>fn());`);
+  await check(`document.querySelectorAll('[data-yukimi-focus-hidden]').length`, 0, 'unloading restores shell markers');
+  await check(`document.body.classList.contains('yukimi-reading')`, false, 'unloading exits reading');
   console.log(`PASS: ${count} Chromium immersive checks`);
   win.destroy();
   app.exit(0);
