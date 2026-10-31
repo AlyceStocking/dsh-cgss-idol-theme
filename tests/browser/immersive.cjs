@@ -23,6 +23,8 @@ app.whenReady().then(async () => {
   };
   await evaluate(`
     document.documentElement.dataset.windowsTitlebar = '';
+    window.nativeStartViewTransition = document.startViewTransition?.bind(document);
+    document.startViewTransition = undefined;
     document.body.innerHTML = '<div data-slot="conversation.header"><header data-window-drag><div data-conversation-tabs>Tabs</div></header></div>' +
       '<main id="background" data-conversation-content data-conversation-region="chat" style="height:300px;padding:20px"><article data-chat-flow-kind="assistant-step" id="card">' +
       '<span id="text">Select this message text</span><button id="button">Copy</button><a id="link" href="#">Link</a></article>' +
@@ -157,6 +159,28 @@ app.whenReady().then(async () => {
   await evaluate(`key('I',{altKey:true,shiftKey:true}); disposers.reverse().splice(0).forEach(fn=>fn());`);
   await check(`document.querySelectorAll('[data-yukimi-focus-hidden]').length`, 0, 'unloading restores shell markers');
   await check(`document.body.classList.contains('yukimi-reading')`, false, 'unloading exits reading');
+  win.webContents.debugger.attach('1.3');
+  await win.webContents.debugger.sendCommand('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] });
+  await evaluate(`window.transitions=[];document.startViewTransition=fn=>{const t=nativeStartViewTransition(fn);transitions.push(t);return t;}; mount(); key('I',{altKey:true,shiftKey:true});void 0;`);
+  await evaluate(`transitions.at(-1).ready.then(()=>true)`);
+  await check(`getComputedStyle(document.documentElement,'::view-transition-old(yukimi-header)').animationName`, 'yukimi-chrome-out', 'outgoing header uses original slide and fade');
+  await check(`getComputedStyle(document.documentElement,'::view-transition-old(yukimi-composer)').getPropertyValue('--yukimi-motion').trim()`, 'translateY(70%)', 'composer slides downward');
+  await check(`getComputedStyle(document.documentElement,'::view-transition-old(yukimi-left)').getPropertyValue('--yukimi-motion').trim()`, 'translateX(-70%)', 'left sidebar slides outward');
+  await new Promise(resolve=>setTimeout(resolve,100));
+  await check(`(()=>{const a=+getComputedStyle(document.documentElement,'::view-transition-old(yukimi-header)').opacity;return a>0&&a<1;})()`, true, 'intermediate rendered frame fades rather than instantly disappearing');
+  await evaluate(`transitions.at(-1).finished.then(()=>true)`);
+  await check(`document.body.hasAttribute('data-yukimi-transition')`, false, 'transition metadata cleans up');
+  await evaluate(`key('Escape');void 0;`);
+  await evaluate(`transitions.at(-1).ready.then(()=>true)`);
+  await check(`getComputedStyle(document.documentElement,'::view-transition-new(yukimi-header)').animationName`, 'yukimi-chrome-in', 'exit animates chrome back into view');
+  await evaluate(`transitions.at(-1).finished.then(()=>true)`);
+  await evaluate(`key('i',{altKey:true});key('Escape');void 0;`);
+  await evaluate(`transitions.at(-1).finished.then(()=>true)`);
+  await check(`!active()&&!document.body.classList.contains('yukimi-reading')&&!document.body.hasAttribute('data-yukimi-transition')`, true, 'rapid toggle finishes in the latest requested mode');
+  await win.webContents.debugger.sendCommand('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  await check(`window.previousTransitions=transitions.length;key('i',{altKey:true});active()&&transitions.length===previousTransitions`, true, 'reduced motion skips snapshot animation');
+  await evaluate(`disposers.reverse().splice(0).forEach(fn=>fn());void 0;`);
+  win.webContents.debugger.detach();
   console.log(`PASS: ${count} Chromium immersive checks`);
   win.destroy();
   app.exit(0);
