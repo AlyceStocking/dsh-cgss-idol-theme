@@ -1,85 +1,102 @@
-# dsh-idol-theme: 190-idol Windows trial
+# dsh-cgss-idol-theme
 
-This public derivative targets 190 Cinderella Girls idols: 188 selectable, 2 pending metadata access. See the [roster report](research/roster/README.md). Selection supports names and romanization. Tap dialogue comes from each idol's BWiki common voice lines (Chinese translations); characters without collected lines fall back to `。。。。。`, and notice text is still a placeholder. The existing palette is unchanged. See [trial and expansion notes](research/two-character-trial.md). The trial has its own dsh-idol-theme package and idol-theme plugin ID, and stores preferences in ~/.dsh/idol-desktop. Keep the old Yukimi package installed but disabled; enable only one theme at a time.
+[中文说明](README.md) · [Showcase](https://alycestocking.github.io/dsh-cgss-idol-theme/)
 
-The inherited theme documentation follows; install commands and data paths below have been updated to the current package name.
+A multi-character **Web theme and Windows desktop companion** for [DeepSeek Harness](https://deepseek-harness.github.io/deepseek-harness/), featuring idols from THE IDOLM@STER Cinderella Girls. Yukimi Sajo is the default character; search by name or romanization to choose another idol.
 
-## The inherited Yukimi theme
+This is the original `dsh-yukimi-theme` repository with `dsh-idol-theme` integrated and the repository renamed. Shared history and the multi-character development commits are preserved. It is no longer a Yukimi-only theme or a separate two-character trial. The package is `dsh-cgss-idol-theme`; its internal plugin entry is `cgss-idol-theme`.
 
-A [Sajo Yukimi](https://wiki.biligame.com/imascg/%E4%BD%90%E5%9F%8E%E9%9B%AA%E7%BE%8E) (佐城雪美) theme for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`) web UI.
+## Features and coverage
 
-This version adds a Windows companion in a transparent, frameless, always-on-top window. It monitors all live root sessions, flips once for each new notice, and shows the selected character's tap line without sound (falling back to `。。。。。` until its lines are collected); notice text is still a placeholder. Questions and approvals remain until settled; turn-ending notices are queued and shown once. Clicking a bubble opens its session in Harness. The in-page pet hides only after the companion is ready; the background, signature and card remain available.
+- **190 listed idols, 188 selectable.** Takumi Mukai and Tomoe Murakami remain disabled because the metadata collection returned HTTP 567, not because they are known to lack assets. Eight outfits without matching icon metadata are also excluded. See the [roster report](research/roster/README.md) and [coverage exceptions](research/roster/coverage.json).
+- **Asset catalog:** 1,850 selectable outfits, 7,400 petit poses and 3,702 CGSS background URLs. Character colors, signatures, Mobamas cards, stickers and transition animations are used where available; not every idol has a sticker or animation.
+- **Character styling:** impression-color accents and glows, light/dark adaptation, translucent frosted reading surfaces, fading history edges and a separate composer surface.
+- **Pet interaction:** drag, single-click to flip and show text, double-click to change outfits, or long-press for character/outfit/background settings. Enter/Space interact, the menu key opens settings, and Escape closes them. Desktop settings use a separate draggable window; the in-page panel follows the pet and closes after inactivity.
+- **Decorations:** signature watermarks and optional Mobamas card rotation (off by default), without reserving an extra sidebar. Below 1100px width or 640px height, cards/signatures hide and the pet shrinks. Immersive modes have separate visibility rules.
+- **Background-only mode:** click empty chat background or press Alt+I to hide sidebars, title, composer and history temporarily. Click the background again, scroll upward or press Esc to restore. History messages and interactive controls are not ordinary background-click targets.
+- **Immersive reading:** long-press history for 650ms or press Alt+Shift+I to retain scrollable history while hiding sidebars, title and composer. Repeat the gesture/shortcut or press Esc to restore.
+- **Dialogue:** taps use the current outfit's Chinese translated lines first, then common lines or placeholder text. A shuffled queue avoids repeats within a cycle. Time-based startup greetings, character-switch greetings and an automatic line every ten minutes are included. **Text only; no voice playback.**
 
-Build with `npm install`, `npm run build:client`, `npm run desktop:package`; run `npm run check` and `npm test`, then quit DSH (the script never terminates processes) and run `npm run desktop:install`. Packaging needs Electron 44.5.1; if the GitHub download fails, pass a local zip with `npm run desktop:package -- --electron-zip-dir <directory>`. Installation creates a complete `.tgz` with the Electron runtime, stores an immutable content-addressed archive under `$DSH_HOME/idol-desktop/packages/`, and uses the Desktop application's own CLI to update the profile dependency. Keep this archive: dependency reinstalls can then restore the complete desktop package instead of the old GitHub default branch. Use `npm run desktop:install -- --bundle-only` to build the archive without installing it. Harness program files are not modified.
+Images load online from the BWiki CDN and require connectivity. These counts describe the checked-in metadata snapshot, not a download/visual audit of every image or idol. The raw outfit-dialogue collection contains 1,876 outfit blocks and 95,544 lines; 1,850 blocks correspond to selectable outfits. These are different counting scopes.
 
-CLI updates of an existing package preserve its package and internal entry switches; successful installation does not imply enablement. A first-time add writes the package into the profile's `dsh.profile.bundles` and enables it, and the running Host loads it right away (verified on DSH Desktop 0.2.0-rc.2, where the companion started without a restart). If the package had been disabled before, enable it and open its details to check that the internal `idol-theme` entry is enabled too. The package switch preserves individual entry settings, so toggling the package cannot undo a disabled internal entry. Fully quit and relaunch the DSH desktop app and its Host process while sessions are idle. The Host caches modules; closing the main window, toggling the plugin or refreshing the page may retain the previous entry.
+## Windows companion
 
-`desktop:sync` remains available for temporary development copies and rollback backups. It does not change the profile dependency source, so a package-manager reinstall can overwrite those copies; use `desktop:install` for persistent installation.
+The separate companion starts only in the **desktop profile on Windows**; an ordinary Web profile does not launch it. The transparent window remains when the main DSH window is minimized or hidden, and closes when the plugin is disabled or the Host exits. The in-page pet hides only after the companion is ready; it remains available if startup fails.
 
-Git checkouts do not include the ignored Electron binary; complete distributions must include `desktop/runtime/win32-x64/`. `npm run desktop:preview` runs a synthetic preview without model calls and keeps separate settings in `build/preview-data/`. To restore a backup, disable the plugin and run `npm run desktop:sync -- --restore-backup <backup-directory>`, then fully quit and relaunch DSH to load the restored Host modules.
+- Monitors live root sessions and outstanding requests; child agents do not get separate notices.
+- Distinguishes turn completion, failure, cancellation, questions and approvals using labels and the selected idol's scene dialogue, rather than a uniform placeholder. Turn completion does not mean the entire project is complete.
+- Questions/approvals remain until settled. Terminal notices last about five seconds and queue behind outstanding requests. Each new notice triggers one flip; visible notices maintain topmost positioning without taking keyboard focus.
+- Clicking a bubble opens the corresponding Harness session; it does not answer or approve anything.
+- Supports multi-monitor dragging, screen bounds and click-through transparent regions. Pet and settings-window positions are saved separately.
+- Warms only the current and next outfit for the current idol (up to eight poses), with bounded decoding concurrency/cache size. Outfit changes wait for decoding; failure preserves the current image. The settings window does not batch-preload outfits.
 
-Pet position, outfits, the detached settings panel position and notification acknowledgements live under `$DSH_HOME/idol-desktop`. The Host uses a local Windows named pipe with a random handshake to talk to its owned helper and authenticated DSH Connection RPC to reach the page; no extra network port is opened. Minimizing or hiding Harness keeps the pet visible; disabling the plugin or quitting Harness closes it. A normal turn ending is not proof that an entire project is complete.
+Desktop preferences live at `$DSH_HOME/idol-desktop/preferences.json` and sync to pages in the same desktop profile. Ordinary Web preferences live only in the current page and reset on refresh.
 
-Dragging reaches each display's edges and corners using the pet's own bounds, independently of its transparent carrier window. Bubbles and settings open on the side with available space. Saved positions refer to the pet itself; previous window-based positions migrate automatically.
+Host/helper communication uses a local named pipe with a random handshake; pages use authenticated DSH RPC. The legacy `/yukimi` RPC and some internal names remain for compatibility. No additional TCP listener is opened. The helper receives session identifiers, titles, status and preset lines—not chat message bodies.
 
-Only the current outfit and the next one preload (up to eight sprites); the detached settings window preloads nothing and loads just the sprite you pick. Switching waits for image decoding and keeps the previous sprite while loading or on failure, avoiding a blank first outfit change.
+## Installation
 
-Session notices raise the companion and its bubble above other windows without taking keyboard focus. The elevated layer is maintained while a notice remains visible, then returns to the normal floating layer.
+### Migrating from the old packages
 
-Historical messages and code blocks use translucent reading surfaces. The opaque composer card masks scrolled messages and shows a soft blue-violet focus glow, while keeping the host's dock gradient, dynamic sizing and upward menus.
+Renaming the GitHub repository does not automatically rename existing profile dependencies. Work while sessions are idle and back up your companion preferences first.
 
-Restyles the page — colors, background, sidebar, and a few interactive widgets — around Yukimi Sajo from *THE iDOLM@STER Cinderella Girls*.
+1. Disable and remove any installed `dsh-yukimi-theme` or `dsh-idol-theme` through the Plugins page before installing the new package. Do not enable old and new themes together: they share parts of the RPC, CSS and storage implementation.
+2. Existing `dsh-idol-theme` preferences under `idol-desktop` continue to be used. The older Yukimi-only package used `yukimi-desktop`; this rename **does not automatically migrate that directory**. Keep it as a backup and reconfigure the new theme if needed.
+3. Check both the new package switch and its internal `cgss-idol-theme` entry, then fully restart the corresponding DSH service or desktop application and Host.
 
-[中文说明](README.md) · [Original single-character theme preview](https://alycestocking.github.io/dsh-yukimi-theme/)
+For a Web profile, remove only the old packages actually installed:
 
-## Features
+~~~sh
+dsh plugin --profile web remove dsh-yukimi-theme
+dsh plugin --profile web remove dsh-idol-theme
+~~~
 
-- **Visible background art** with translucent reading surfaces limited to messages and tool content; supports light and dark palettes.
-- **Always-visible floating doll**: in the Web page it is never folded into a sidebar or dialog (the Windows companion replaces it once ready); drag, click to flip with dialogue, double-click to change outfits, and long-press to choose a doll or background.
-- **Keyboard interaction**: Enter/Space interacts, the context-menu key opens settings, and Escape closes settings.
-- **Floating card and signature**: the card remains draggable, automatically cycles, and advances on click.
-- **Responsive extras**: below 1100px wide or 640px tall, only the Mobamas card and signature hide. The doll scales down but stays mounted and visible. Extras return with their previous display preferences when space permits.
-- **Full conversation width**: no decoration sidebar, reserved column or decoration gallery dialog.
-- **Viewport bounds**: doll dragging/resizing and the settings panel stay within the viewport.
+### Web theme
 
-The threshold is defined by matching client/CSS media queries. In the Web profile, preferences are page-local and reset on reload. The Windows companion saves preferences locally and synchronizes them with the desktop app's page.
+~~~sh
+dsh plugin --profile web add github:AlyceStocking/dsh-cgss-idol-theme
+~~~
 
-## Install the Web profile theme
+Stop the old Web service, start `dsh web`, then refresh the page. Built browser JavaScript is committed, so no install-time prepare build is required. Append `#<commit SHA>` to the GitHub specification to pin a revision.
 
-Install with dsh's own plugin management command (the package then appears in the Settings → Plugins management UI):
+Use official plugin management rather than copying into node_modules and adding manual patch rows.
 
-```bash
-dsh plugin --profile web add github:AlyceStocking/dsh-idol-theme
-```
+### Build a complete Windows desktop package
 
-Stop any running Web server, then start it again:
+Requires Node.js **22.12.0 or newer**, npm, and access to Electron downloads. Electron is pinned to 44.5.1; the packaging target is Windows x64.
 
-```bash
-dsh web
-```
+~~~powershell
+git clone https://github.com/AlyceStocking/dsh-cgss-idol-theme.git
+cd dsh-cgss-idol-theme
+npm ci
+npm run build:characters
+npm run build:client
+npm run check
+npm test
+npm run desktop:package
+# Disable old themes and fully quit DSH while sessions are idle.
+# The installer does not terminate running processes.
+npm run desktop:install
+~~~
 
-or `dsh --profile web`.
+Git sources do not include the ignored Electron binaries. Build `desktop/runtime/win32-x64/CGSS Idol Desktop.exe` first; installing GitHub sources alone does not guarantee a runnable standalone companion. If downloads fail, use `npm run desktop:package -- --electron-zip-dir <directory>` with a local Electron zip directory.
 
-> Do not install by copying into `node_modules` and editing `cordis.patch.yml` by hand: the plugin runs, but because it is not a pnpm dependency of the profile, the plugin management UI will not list it and it cannot be toggled or removed from the UI.
-> `DSH_HOME` defaults to `C:\Users\<you>\.dsh` on Windows.
+The installer verifies the complete runtime, stores an immutable content-addressed archive containing lib, desktop and Electron under `$DSH_HOME/idol-desktop/packages/`, then invokes **DSH Desktop's own CLI** to update the desktop profile. Keep that archive for dependency reinstalls. Harness program files are not modified. To create an archive without installation: `npm run desktop:install -- --bundle-only`.
+
+Updating an existing package can preserve disabled switches. Successful installation does not imply activation: check both package and internal entry switches. Fully restart DSH Desktop and its Host after Host-code updates; refreshing a page or closing only the main window can retain cached modules.
 
 ## Development and validation
 
-For Web profile style iteration, edit `lib/client.js` directly. Shared artwork URLs and the fallback line live in `lib/assets.js`; run `npm run build:client` after editing them to regenerate the client asset block.
+- Edit non-generated sections of [the client](lib/client.js) for page logic. After asset/catalog changes, run `npm run build:characters` and `npm run build:client`, and commit generated output for GitHub installs.
+- `npm run check` validates syntax and generated-data freshness. `npm test` covers cleanup, character switching, dialogue, notices, preferences, image-loading races, window bounds and package identity.
+- `npm run desktop:preview` uses synthetic state and isolated `build/preview-data/`; it does not call a model or alter production preferences.
+- `desktop:sync` is only a temporary development copy, not a dependency-source update or an old-package rename migration. Prefer `desktop:install` for managed installation; dependency reinstalls may overwrite temporary copies.
+- This integration passed 120 automated tests, Windows packaging and full-archive validation. **The renamed package was not installed and revalidated in a live DSH GUI during this merge.** See [validation records](docs/validation.md) for historical evidence and current boundaries.
 
-Tap dialogue is collected by `npm run audit:dialogue` from the wiki's `<idol>/公共语音台词` subpages (batched raw wikitext, rate limited, resumable) into `research/roster/lines.json`; then run `npm run build:characters` and `npm run build:client`. Characters without collected lines use the placeholder. Run `npm run check` and `npm test`.
+## Rights and sources
 
-The installed Web profile uses a file copy. For browser-only style or artwork changes, sync the generated `lib/client.js` to that profile's plugin directory and refresh the browser page. Stop and restart `dsh web` if the previous client remains cached.
-
-For the Windows companion, follow the complete build, package and sync workflow above, then fully quit and relaunch the desktop app and its Host process. Copying only `lib/client.js` does not update the Host bridge or the companion executable. See the [validation record](docs/validation.md) for Web and Windows companion results, their tested scope, and official references.
-
-## License & credits
-
-- **Code**: MIT License, © 2026 AlyceStocking.
-- **Artwork**: The 190 selectable idols and all illustrations / cards / paper dolls / signatures are © **Bandai Namco Entertainment / Cygames** (*THE iDOLM@STER Cinderella Girls*). This theme only hot-links the [imascg wiki](https://wiki.biligame.com/imascg) image URLs; it does **not bundle or redistribute** any official assets.
-- Personal / fan use only; not for commercial use.
-
-## Thanks
-
-- Character & assets: [imascg wiki](https://wiki.biligame.com/imascg/佐城雪美)
-- Palette based on Yukimi's image color `#171C8F` noted on the wiki page.
+- **Code** is by AlyceStocking and licensed under the [MIT License](LICENSE).
+- Character, official artwork and original dialogue rights belong to Bandai Namco Entertainment / Cygames and the relevant rights holders. This is an unofficial fan theme, not an official endorsement or license.
+- Images are referenced online from [BWiki imascg](https://wiki.biligame.com/imascg); official image/audio binaries are not bundled. However, the repository **does contain collected Chinese dialogue/translation text and asset metadata**, and dialogue is embedded in the client. It would be inaccurate to claim that no official content is redistributed at all.
+- Wiki/translation content remains subject to its contributors' and rights holders' terms; placing it here does **not** make it part of the code's MIT grant. This project grants no commercial rights to characters, artwork, original dialogue or translations.
+- Thanks to BWiki imascg's editors, translators and maintainers. External asset availability depends on the source site; metadata checks do not guarantee permanent URLs.
