@@ -62,6 +62,16 @@ dsh plugin --profile web add github:AlyceStocking/dsh-cgss-idol-theme
 
 请使用官方插件管理命令或管理页面安装，不要通过手动复制到 node_modules 再手写 patch 代替正式安装。
 
+### 预构建完整包（推荐 Windows 桌宠）
+
+[GitHub Release v1.3.0](https://github.com/AlyceStocking/dsh-cgss-idol-theme/releases/tag/v1.3.0) 提供包含 Windows x64 Electron 运行时的完整插件，以及 SHA-256 校验文件。先按上面的迁移步骤移除旧包，再用 **DSH Desktop 自带 CLI** 安装：
+
+```powershell
+dsh plugin --profile desktop add "https://github.com/AlyceStocking/dsh-cgss-idol-theme/releases/download/v1.3.0/dsh-cgss-idol-theme-1.3.0.tgz"
+```
+
+普通 Web 用户可将 profile 改为 `web`，但此完整包包含较大的 Windows 运行时；不需要桌宠时可使用上面的 GitHub 源码安装。安装后检查插件开关并完整重启对应应用。Release 压缩包是固定版本，不会随 `main` 的后续提交自动变化。
+
 ### Windows 桌宠：从源码构建完整包
 
 需要 Node.js **22.12.0 或以上**、npm，以及能下载 Electron 的网络。当前锁定 Electron 44.5.1，打包目标为 Windows x64。

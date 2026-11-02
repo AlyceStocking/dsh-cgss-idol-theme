@@ -62,6 +62,16 @@ Stop the old Web service, start `dsh web`, then refresh the page. Built browser 
 
 Use official plugin management rather than copying into node_modules and adding manual patch rows.
 
+### Prebuilt complete package (recommended for the Windows companion)
+
+[GitHub Release v1.3.0](https://github.com/AlyceStocking/dsh-cgss-idol-theme/releases/tag/v1.3.0) provides the complete plugin with the Windows x64 Electron runtime and a SHA-256 checksum file. Remove old packages as described above, then install using **DSH Desktop's own CLI**:
+
+```powershell
+dsh plugin --profile desktop add "https://github.com/AlyceStocking/dsh-cgss-idol-theme/releases/download/v1.3.0/dsh-cgss-idol-theme-1.3.0.tgz"
+```
+
+Web users may replace the profile with `web`, but the complete archive includes the large Windows runtime. Prefer the GitHub source installation above if you only need the Web theme. Check activation switches and fully restart the relevant application. A Release archive is a pinned version; later `main` commits do not change its contents.
+
 ### Build a complete Windows desktop package
 
 Requires Node.js **22.12.0 or newer**, npm, and access to Electron downloads. Electron is pinned to 44.5.1; the packaging target is Windows x64.

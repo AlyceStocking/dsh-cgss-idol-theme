@@ -1,7 +1,15 @@
 {
   "name": "dsh-cgss-idol-theme",
-  "version": "1.3.0-desktop.6",
-  "private": true,
+  "version": "1.3.0",
+  "author": "AlyceStocking",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlyceStocking/dsh-cgss-idol-theme.git"
+  },
+  "homepage": "https://github.com/AlyceStocking/dsh-cgss-idol-theme#readme",
+  "bugs": { "url": "https://github.com/AlyceStocking/dsh-cgss-idol-theme/issues" },
+  "keywords": ["deepseek-harness", "dsh-plugin", "theme", "cgss"],
+  "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org/" },
   "description": "CGSS 偶像主题：多角色 Web 配色与卡面、沉浸阅读、Windows 桌宠和会话提醒。",
   "type": "module",
   "main": "lib/index.js",
