@@ -19,7 +19,7 @@ async function fixture(t) {
     await rm(resolved, { recursive: true, force: true });
   });
   const root = path.join(directory, 'source'), dshHome = path.join(directory, 'dsh home & tools');
-  const metadata = { name: 'dsh-idol-theme', version: '1.2.0-desktop.2', type: 'module', files: ['lib', 'desktop', 'cordis.patch.yml', ...docs], dsh: { bundle: { patch: './cordis.patch.yml' } } };
+  const metadata = { name: 'dsh-cgss-idol-theme', version: '1.2.0-desktop.2', type: 'module', files: ['lib', 'desktop', 'cordis.patch.yml', ...docs], dsh: { bundle: { patch: './cordis.patch.yml' } } };
   for (const relative of [...requiredSourceFiles, ...docs]) {
     const file = path.join(root, relative);
     await mkdir(path.dirname(file), { recursive: true });
@@ -31,7 +31,7 @@ async function fixture(t) {
   }
   const profile = path.join(dshHome, 'profiles', 'desktop', 'package.json');
   await mkdir(path.dirname(profile), { recursive: true });
-  await writeFile(profile, '{"dependencies":{"dsh-idol-theme":"github:example/original"}}');
+  await writeFile(profile, '{"dependencies":{"dsh-cgss-idol-theme":"github:example/original"}}');
   return { directory, root, dshHome, profile };
 }
 

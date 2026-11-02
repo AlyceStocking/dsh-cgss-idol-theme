@@ -53,7 +53,7 @@ async function collect({ batchSize = 50, gap = 2500 } = {}) {
       try {
         const url = new URL(endpoint);
         url.search = new URLSearchParams({ format: 'json', formatversion: '2', ...params });
-        const response = await fetch(url, { signal: AbortSignal.timeout(30000), headers: { 'user-agent': 'dsh-idol-theme/1.3 visual audit' } });
+        const response = await fetch(url, { signal: AbortSignal.timeout(30000), headers: { 'user-agent': 'dsh-cgss-idol-theme/1.3 visual audit' } });
         if ([429, 567].includes(response.status)) { limited = true; throw new Error('HTTP ' + response.status + '; collection paused'); }
         if (!response.ok) throw new Error('HTTP ' + response.status);
         const data = await response.json();

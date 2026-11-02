@@ -1,4 +1,4 @@
-import { cp, mkdir, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { packager } from '@electron/packager';
@@ -11,12 +11,13 @@ await mkdir(path.join(stage, 'lib'), { recursive: true });
 await cp(path.join(root, 'desktop'), path.join(stage, 'desktop'), { recursive: true, filter: source => !source.startsWith(path.join(root, 'desktop', 'runtime')) });
 await cp(path.join(root, 'lib', 'assets.js'), path.join(stage, 'lib', 'assets.js'));
 await cp(path.join(root, 'lib', 'characters.js'), path.join(stage, 'lib', 'characters.js'));
-await writeFile(path.join(stage, 'package.json'), JSON.stringify({ name: 'idol-desktop', version: '1.2.0', private: true, type: 'module', main: 'desktop/main.cjs' }, null, 2));
+const metadata = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
+await writeFile(path.join(stage, 'package.json'), JSON.stringify({ name: 'cgss-idol-desktop', version: metadata.version, private: true, type: 'module', main: 'desktop/main.cjs' }, null, 2));
 const require = createRequire(import.meta.url);
 const zipArgument = process.argv.indexOf('--electron-zip-dir');
 const pristineElectron = path.join(root, 'build', 'desktop-electron-pristine.exe');
 const paths = await packager({
-  dir: stage, out: path.join(root, 'build', 'packaged'), name: 'Yukimi Desktop',
+  dir: stage, out: path.join(root, 'build', 'packaged'), name: 'CGSS Idol Desktop',
   platform: 'win32', arch: 'x64', electronVersion: require('electron/package.json').version,
   ...(zipArgument >= 0 ? { electronZipDir: path.resolve(process.argv[zipArgument + 1]) } : {}),
   asar: true, overwrite: true, prune: true,
@@ -25,6 +26,6 @@ const paths = await packager({
 // Packager 20 always edits PE resources when a name/version is supplied. The
 // rewritten 44.5.1 executable fails Windows CreateProcess in our validation;
 // preserve the released binary while app.asar supplies our title and code.
-await cp(pristineElectron, path.join(paths[0], 'Yukimi Desktop.exe'));
+await cp(pristineElectron, path.join(paths[0], 'CGSS Idol Desktop.exe'));
 await cp(paths[0], path.join(root, 'desktop', 'runtime', 'win32-x64'), { recursive: true });
-console.log('Packaged desktop/runtime/win32-x64/Yukimi Desktop.exe');
+console.log('Packaged desktop/runtime/win32-x64/CGSS Idol Desktop.exe');

@@ -1,5 +1,16 @@
 # 分阶段验证记录
 
+> 历史记录中的旧包名、版本、安装路径和现场测试结果仅描述当时的环境；不代表当前合并版已完成同样的现场验收。当前安装与迁移方式以根目录 README 为准。
+
+## 仓库合并与重命名（2026-11-02）
+
+- 将原 `dsh-yukimi-theme/main`（`4b162a3`）快进到 `dsh-idol-theme/main`（`37f1e4f`），保留全部 28 个新增提交及共同历史。正式包名与仓库名改为 `dsh-cgss-idol-theme`，内部插件 ID 为 `cgss-idol-theme`，版本为 `1.3.0-desktop.6`。
+- 同步修改模块加载 ID、bundle patch、安装/同步校验、锁文件与桌宠可执行文件名。桌宠包版本从根清单读取；沿用 `idol-desktop` 数据目录和旧 RPC 协议，旧主题不可同时启用。
+- Windows / Node.js 24.21.0：`npm run build:characters`、`npm run build:client`、`npm run check` 通过，`npm test` 共 120 项全部通过（含两项新增包身份/桌宠入口一致性测试）。
+- `npm ci --ignore-scripts --no-audit --no-fund`、`npm run desktop:package` 通过，生成 `CGSS Idol Desktop.exe`；Host 的 `helperCommand()` 能定位此产物。
+- `npm run desktop:install -- --bundle-only --dsh-home ./build/validation-home` 通过，验证完整 Electron 运行时及压缩包内容；仅在仓库忽略目录生成测试归档，未修改用户已安装 profile。
+- 本轮没有在真实 DSH GUI 中安装新名称插件或做逐角色视觉验收；单元测试、打包和归档校验不等于现场激活验证。Electron 二进制和本地测试归档不提交到 Git。
+
 ## 阶段 1：阅读底板（2026-09-10）
 - 使用官方 theme.overrideTokens，并显式依赖 theme、slots、timer。
 - 移除编译类名透明背景、文字描边和全局透明代码块覆盖。

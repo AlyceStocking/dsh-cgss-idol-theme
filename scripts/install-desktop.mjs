@@ -36,8 +36,8 @@ async function regularDirectory(directory) {
 async function validateSource(root) {
   for (const name of releaseNames) await regularTree(path.join(root, name));
   const metadata = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
-  if (metadata.name !== 'dsh-idol-theme' || !/^\d+\.\d+\.\d+(?:-[\w.-]+)?(?:\+[\w.-]+)?$/.test(metadata.version ?? '')) throw new Error('Source is not a versioned Yukimi plugin.');
-  if (metadata.dsh?.bundle?.patch !== './cordis.patch.yml') throw new Error('Source does not declare the Yukimi bundle patch.');
+  if (metadata.name !== 'dsh-cgss-idol-theme' || !/^\d+\.\d+\.\d+(?:-[\w.-]+)?(?:\+[\w.-]+)?$/.test(metadata.version ?? '')) throw new Error('Source is not a versioned CGSS Idol plugin.');
+  if (metadata.dsh?.bundle?.patch !== './cordis.patch.yml') throw new Error('Source does not declare the CGSS Idol bundle patch.');
   for (const relative of requiredArchiveFiles) {
     const info = await lstat(path.join(root, relative));
     if (!info.isFile() || info.size === 0) throw new Error(`Missing or empty release component: ${relative}`);

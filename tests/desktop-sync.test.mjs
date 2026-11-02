@@ -15,14 +15,14 @@ async function fixture(t, desktop = false) {
     await rm(resolved, { recursive: true, force: true });
   });
   const root = path.join(directory, 'source'), dshHome = path.join(directory, 'dsh');
-  const target = path.join(dshHome, 'profiles', 'desktop', 'node_modules', 'dsh-idol-theme');
+  const target = path.join(dshHome, 'profiles', 'desktop', 'node_modules', 'dsh-cgss-idol-theme');
   for (const relative of requiredSourceFiles) {
     const file = path.join(root, relative);
     await mkdir(path.dirname(file), { recursive: true });
-    await writeFile(file, relative === 'package.json' ? JSON.stringify({ name: 'dsh-idol-theme', version: 'new' }) : `new:${relative}`);
+    await writeFile(file, relative === 'package.json' ? JSON.stringify({ name: 'dsh-cgss-idol-theme', version: 'new' }) : `new:${relative}`);
   }
   await mkdir(path.join(target, 'lib'), { recursive: true });
-  await writeFile(path.join(target, 'package.json'), JSON.stringify({ name: 'dsh-idol-theme', version: 'old' }));
+  await writeFile(path.join(target, 'package.json'), JSON.stringify({ name: 'dsh-cgss-idol-theme', version: 'old' }));
   await writeFile(path.join(target, 'cordis.patch.yml'), 'old patch');
   await writeFile(path.join(target, 'lib', 'index.js'), 'old Host');
   await writeFile(path.join(target, 'lib', 'legacy.js'), 'old plugin file');

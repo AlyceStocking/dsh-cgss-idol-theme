@@ -11,7 +11,7 @@ export const requiredSourceFiles = [
   'lib/index.js', 'lib/client.js', 'lib/assets.js', 'lib/characters.js', 'lib/desktop-state.js', 'lib/desktop-process.js',
   'desktop/main.cjs', 'desktop/preload.cjs', 'desktop/index.html', 'desktop/style.css', 'desktop/renderer.js', 'desktop/logic.js', 'desktop/sprite-cache.js',
   ...[
-    'Yukimi Desktop.exe', 'resources/app.asar', 'resources.pak', 'icudtl.dat', 'ffmpeg.dll',
+    'CGSS Idol Desktop.exe', 'resources/app.asar', 'resources.pak', 'icudtl.dat', 'ffmpeg.dll',
     'chrome_100_percent.pak', 'chrome_200_percent.pak', 'snapshot_blob.bin', 'v8_context_snapshot.bin',
     'd3dcompiler_47.dll', 'dxcompiler.dll', 'dxil.dll', 'vulkan-1.dll', 'vk_swiftshader.dll',
     'vk_swiftshader_icd.json', 'version', 'locales/en-US.pak', 'locales/zh-CN.pak',
@@ -19,7 +19,7 @@ export const requiredSourceFiles = [
 ];
 
 const defaultHome = () => path.resolve(process.env.DSH_HOME || path.join(homedir(), '.dsh'));
-const installedPath = home => path.join(home, 'profiles', 'desktop', 'node_modules', 'dsh-idol-theme');
+const installedPath = home => path.join(home, 'profiles', 'desktop', 'node_modules', 'dsh-cgss-idol-theme');
 const samePath = (a, b) => process.platform === 'win32' ? a.toLowerCase() === b.toLowerCase() : a === b;
 const within = (base, candidate) => {
   const relative = path.relative(base, candidate);
@@ -41,7 +41,7 @@ async function regularTree(candidate) {
 
 async function validateSource(root) {
   const metadata = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
-  if (metadata.name !== 'dsh-idol-theme') throw new Error('Source is not the Yukimi plugin.');
+  if (metadata.name !== 'dsh-cgss-idol-theme') throw new Error('Source is not the CGSS Idol plugin.');
   for (const relative of requiredSourceFiles) {
     const file = path.join(root, relative);
     const info = await stat(file);
@@ -55,7 +55,7 @@ async function installedRoot(target, verifyPackage = true) {
   const resolved = await realpath(target);
   if (verifyPackage) {
     const installed = JSON.parse(await readFile(path.join(resolved, 'package.json'), 'utf8'));
-    if (installed.name !== 'dsh-idol-theme') throw new Error('Target is not the installed Yukimi plugin.');
+    if (installed.name !== 'dsh-cgss-idol-theme') throw new Error('Target is not the installed CGSS Idol plugin.');
   }
   return resolved;
 }
@@ -144,5 +144,5 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
   const restoreIndex = process.argv.indexOf('--restore-backup');
   if (restoreIndex >= 0 && !process.argv[restoreIndex + 1]) throw new Error('--restore-backup requires the backup directory.');
   const result = restoreIndex >= 0 ? await restoreBackup({ backup: process.argv[restoreIndex + 1] }) : await syncDesktop();
-  console.log(`${restoreIndex >= 0 ? 'Plugin restored' : 'Plugin synced'}: ${result.target}\nBackup: ${result.backup}\nEnable dsh-idol-theme on the Plugins page to reload it.`);
+  console.log(`${restoreIndex >= 0 ? 'Plugin restored' : 'Plugin synced'}: ${result.target}\nBackup: ${result.backup}\nEnable dsh-cgss-idol-theme on the Plugins page to reload it.`);
 }
