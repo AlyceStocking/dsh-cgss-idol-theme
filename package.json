@@ -1,15 +1,25 @@
 {
   "name": "dsh-cgss-idol-theme",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "author": "AlyceStocking",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/AlyceStocking/dsh-cgss-idol-theme.git"
   },
   "homepage": "https://github.com/AlyceStocking/dsh-cgss-idol-theme#readme",
-  "bugs": { "url": "https://github.com/AlyceStocking/dsh-cgss-idol-theme/issues" },
-  "keywords": ["deepseek-harness", "dsh-plugin", "theme", "cgss"],
-  "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org/" },
+  "bugs": {
+    "url": "https://github.com/AlyceStocking/dsh-cgss-idol-theme/issues"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh-plugin",
+    "theme",
+    "cgss"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "description": "CGSS 偶像主题：多角色 Web 配色与卡面、沉浸阅读、Windows 桌宠和会话提醒。",
   "type": "module",
   "main": "lib/index.js",
@@ -21,7 +31,11 @@
   },
   "files": [
     "lib",
-    "desktop",
+    "desktop/*.cjs",
+    "desktop/*.js",
+    "desktop/*.html",
+    "desktop/*.css",
+    "scripts/desktop-runtime.mjs",
     "cordis.patch.yml",
     "README.md",
     "README.en.md",
@@ -46,10 +60,22 @@
     "build:characters": "node scripts/build-characters.mjs",
     "audit:roster": "node scripts/audit-roster.mjs",
     "audit:dialogue": "node scripts/audit-dialogue.mjs",
-    "audit:serifu": "node scripts/audit-serifu.mjs"
+    "audit:serifu": "node scripts/audit-serifu.mjs",
+    "desktop:runtime": "node scripts/desktop-runtime.mjs",
+    "pack:npm": "node scripts/pack-npm.mjs"
   },
   "devDependencies": {
     "@electron/packager": "20.3.0",
     "electron": "44.5.1"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "bin": {
+    "dsh-cgss-idol-runtime": "./scripts/desktop-runtime.mjs"
+  },
+  "dependencies": {
+    "@electron/get": "5.1.0",
+    "extract-zip": "2.0.1"
   }
 }

@@ -2,6 +2,18 @@
 
 > 历史记录中的旧包名、版本、安装路径和现场测试结果仅描述当时的环境；不代表当前合并版已完成同样的现场验收。当前安装与迁移方式以根目录 README 为准。
 
+## 轻量 npm 分发与显式桌宠运行时（1.3.1，2026-11-03）
+
+- npm 包改用源码白名单：保留 Web 与桌宠代码、CLI，排除 Electron 二进制。`npm run pack:npm` 在已有完整运行时的源码目录中仍只生成约 6.47 MB / 20 文件的轻量包（解压约 16.01 MB），并检查必要文件、二进制泄漏与 10 MB 上限；原 v1.3.0 完整包为 170.71 MB。
+- 显式安装 Electron 44.5.1 / Windows x64，固定官方 ZIP SHA-256 为 `9b382492dcfee91f8f9e92c91f7972550a1b95d2299cac72279dab33a600d7db`。不设置安装生命周期下载，也不在 Host 启动时联网。
+- Windows / Node.js 24.21.0：`npm run check`、`npm test` 通过，148/148 测试成功，包括固定哈希拒绝错误 ZIP、真实解压库、锁、损坏缓存、路径逃逸/链接拒绝、CLI、打包分离和 helper 路径选择。
+- 在仓库忽略的 build 目录下，以真实官方 ZIP 执行离线安装与 status 成功；通过 @electron/get 的既有官方 ZIP 缓存完成默认下载路径安装。已安装缓存复用时，即使传入不存在的 archive 路径也不触发读取或下载。此项没有宣称测试了未缓存的全新联网下载。
+- 隔离目录执行 `npm install --ignore-scripts --omit=dev`：Host ESM 导入、bin 注册、不含 desktop/runtime、选择固定缓存并执行当前插件 main.cjs 的路径校验通过。缓存原生二进制在 Electron Node 模式报告版本 44.5.1。
+- 实测发现 Electron 在可执行文件旁生成普通 debug.log；已补回归，仅豁免根目录的普通同名日志。仍拒绝同名目录/链接、其他未知文件、嵌套日志及被修改的运行时文件。清单用于检测损坏，不是抵御拥有同等目录写权限的攻击者的签名。
+- `npm run desktop:package`、`npm run desktop:install -- --bundle-only --dsh-home build/full-smoke-home` 通过，完整发行包仍显式包含运行时，且不改动根清单的轻量白名单。未覆盖已发布的 v1.3.0 Release。
+- **GUI 边界：** 在本运行器中，缓存 Electron 与旧完整包 Electron 的 GUI 模式探针均以 `0x80000003` 退出；Node 模式可以报告版本，并出现 Crashpad 管道诊断。没有完成真实 DSH GUI 启动/显示验收，不把解压校验、路径测试或 Node 模式探针当作 GUI 成功。
+- 未修改用户 DSH profile、正式偏好或应用程序文件。npm 是否已发布以 registry 查询为准，源码与 tarball 构建成功不代表上传成功。
+
 ## 仓库合并与重命名（2026-11-02）
 
 - 将原 `dsh-yukimi-theme/main`（`4b162a3`）快进到 `dsh-idol-theme/main`（`37f1e4f`），保留全部 28 个新增提交及共同历史。正式包名与仓库名改为 `dsh-cgss-idol-theme`，内部插件 ID 为 `cgss-idol-theme`，版本为 `1.3.0-desktop.6`。

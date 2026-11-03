@@ -52,7 +52,52 @@ dsh plugin --profile web remove dsh-yukimi-theme
 dsh plugin --profile web remove dsh-idol-theme
 ```
 
-### Web 主题
+### 轻量 npm 包（1.3.1）
+
+轻量包包含全部 Web 主题与桌宠代码，**不包含 Electron 二进制**。Web 用户无需安装桌宠运行时；Windows x64 桌宠用户需在安装插件后显式安装运行时。没有 `postinstall`，插件启动也不会自动下载 Electron。
+
+- npm 页面：<https://www.npmjs.com/package/dsh-cgss-idol-theme>
+- 1.3.1 registry tarball：<https://registry.npmjs.org/dsh-cgss-idol-theme/-/dsh-cgss-idol-theme-1.3.1.tgz>
+- **npm 可用版本以页面/registry 为准；若指定版本返回 404，请先使用下方 GitHub 安装方式。** 仓库中的版本号不等于 npm 已发布。
+
+按实际使用的 profile 二选一；desktop 安装使用 **DSH Desktop 自带 CLI**：
+
+```sh
+# Web 主题
+dsh plugin --profile web add dsh-cgss-idol-theme@1.3.1
+# Windows 桌宠（还需下一步安装运行时）
+dsh plugin --profile desktop add dsh-cgss-idol-theme@1.3.1
+```
+
+### 轻量包：显式安装 Windows 桌宠运行时
+
+在 Windows x64 上使用 Node.js **22.12.0 或以上**及 npm，显式运行：
+
+```powershell
+npx --yes --package=dsh-cgss-idol-theme@1.3.1 dsh-cgss-idol-runtime install
+npx --yes --package=dsh-cgss-idol-theme@1.3.1 dsh-cgss-idol-runtime status
+```
+
+若 Host 使用自定义 `DSH_HOME`，安装和状态检查必须指向同一目录，例如：
+
+```powershell
+npx --yes --package=dsh-cgss-idol-theme@1.3.1 dsh-cgss-idol-runtime install --dsh-home "D:\DSHData"
+npx --yes --package=dsh-cgss-idol-theme@1.3.1 dsh-cgss-idol-runtime status --dsh-home "D:\DSHData"
+```
+
+运行时固定为 Electron **44.5.1 / Windows x64**，保存在 `$DSH_HOME/idol-desktop/runtimes/electron-44.5.1-win32-x64/`（默认 `DSH_HOME` 为 `~/.dsh`），而不是 npx 临时目录。有效的同版本缓存直接复用，不重复下载。当前每次执行 `status`，以及 Host 启动时解析缓存，都会逐文件读取并进行 SHA-256 校验，覆盖整个 Electron 缓存（约几百 MB）；此校验不联网，但每次检查/启动都有磁盘 I/O 成本，并非仅首次验证。安装并用 `status` 确认后，检查插件开关并**完整重启 DSH Desktop 与 Host**；Host 使用固定缓存中的 Electron 运行当前已安装插件的 [desktop/main.cjs](<desktop/main.cjs>)，无需保留 npx 临时目录。
+
+可通过 `--archive` 使用预先下载的[官方 Electron zip](https://github.com/electron/electron/releases/download/v44.5.1/electron-v44.5.1-win32-x64.zip)，离线安装运行时：
+
+```powershell
+npx --yes --package=dsh-cgss-idol-theme@1.3.1 dsh-cgss-idol-runtime install --archive "D:\Downloads\electron-v44.5.1-win32-x64.zip" --dsh-home "D:\DSHData"
+```
+
+在线下载与 `--archive` 都必须通过相同的固定 SHA-256 校验：`9b382492dcfee91f8f9e92c91f7972550a1b95d2299cac72279dab33a600d7db`，来源为[官方 v44.5.1 SHASUMS256.txt](https://github.com/electron/electron/releases/download/v44.5.1/SHASUMS256.txt)。`--archive` 只免除运行时下载；npx 所需的 npm 包及依赖也必须已缓存，才能在完全离线时执行。
+
+**轻量 npm 下载不等于桌宠总磁盘占用变小**：首次使用桌宠仍需单独下载、解压 Electron。此显式安装与缓存加载流程尚未完成真实 DSH GUI 验收；不能将 CLI 安装成功视为桌宠现场验收通过。npm 尚不可用时先用 GitHub 安装 Web 主题；桌宠可使用下方已发布的 v1.3.0 完整包或源码完整构建流程。
+
+### GitHub 安装 Web 主题（npm 不可用时）
 
 ```sh
 dsh plugin --profile web add github:AlyceStocking/dsh-cgss-idol-theme
@@ -62,7 +107,7 @@ dsh plugin --profile web add github:AlyceStocking/dsh-cgss-idol-theme
 
 请使用官方插件管理命令或管理页面安装，不要通过手动复制到 node_modules 再手写 patch 代替正式安装。
 
-### 预构建完整包（推荐 Windows 桌宠）
+### 预构建完整包（Windows 桌宠的独立选择）
 
 [GitHub Release v1.3.0](https://github.com/AlyceStocking/dsh-cgss-idol-theme/releases/tag/v1.3.0) 提供包含 Windows x64 Electron 运行时的完整插件，以及 SHA-256 校验文件。先按上面的迁移步骤移除旧包，再用 **DSH Desktop 自带 CLI** 安装：
 
@@ -70,7 +115,7 @@ dsh plugin --profile web add github:AlyceStocking/dsh-cgss-idol-theme
 dsh plugin --profile desktop add "https://github.com/AlyceStocking/dsh-cgss-idol-theme/releases/download/v1.3.0/dsh-cgss-idol-theme-1.3.0.tgz"
 ```
 
-普通 Web 用户可将 profile 改为 `web`，但此完整包包含较大的 Windows 运行时；不需要桌宠时可使用上面的 GitHub 源码安装。安装后检查插件开关并完整重启对应应用。Release 压缩包是固定版本，不会随 `main` 的后续提交自动变化。
+普通 Web 用户可将 profile 改为 `web`，但此完整包包含较大的 Windows 运行时；不需要桌宠时可使用上面的轻量 npm 包或 GitHub 源码安装。安装后检查插件开关并完整重启对应应用。v1.3.0 完整包继续保留，不被轻量 npm 包覆盖；其中已有运行时，无需另行执行上述运行时安装命令。Release 压缩包是固定版本，不会随 `main` 的后续提交自动变化。
 
 ### Windows 桌宠：从源码构建完整包
 
@@ -89,7 +134,7 @@ npm run desktop:package
 npm run desktop:install
 ```
 
-GitHub 源码不包含被 Git 忽略的 Electron 二进制。独立桌宠需先打包生成 `desktop/runtime/win32-x64/CGSS Idol Desktop.exe`；仅从 GitHub 安装源码不能保证有独立桌宠可运行。下载失败时可用 `npm run desktop:package -- --electron-zip-dir <目录>` 指定本地 Electron zip 目录。
+GitHub 源码不包含被 Git 忽略的 Electron 二进制。此完整包流程先打包生成 `desktop/runtime/win32-x64/CGSS Idol Desktop.exe`，仍然保留；不要与轻量包的显式运行时安装混为一谈。仅从 GitHub 安装源码不能保证有独立桌宠可运行。下载失败时可用 `npm run desktop:package -- --electron-zip-dir <目录>` 指定本地 Electron zip 目录。
 
 安装脚本验证完整运行时，把包含 lib、desktop 和 Electron 的不可变压缩包按内容哈希保存到 `$DSH_HOME/idol-desktop/packages/`，再调用 **DSH Desktop 自带 CLI** 更新 desktop profile。请保留归档供后续依赖重装使用；不修改 Harness 程序文件。仅生成包而不安装：`npm run desktop:install -- --bundle-only`。
 
@@ -99,9 +144,10 @@ GitHub 源码不包含被 Git 忽略的 Electron 二进制。独立桌宠需先�
 
 - 编辑 `lib/client.js` 中非生成区块迭代页面逻辑；素材与角色数据变更后运行 `npm run build:characters` 和 `npm run build:client`。提交生成产物，保证 GitHub 源码安装可加载。
 - `npm run check` 检查语法和生成数据同步；`npm test` 检查主题清理、角色切换、台词、桌宠提醒、偏好、加载竞态、窗口边界和包身份契约。
+- `npm run pack:npm` 生成并检查轻量包，拒绝混入 Electron 二进制，并限制压缩包小于 10 MB；完整包仍使用 `desktop:package` 和 `desktop:install -- --bundle-only`。
 - `npm run desktop:preview` 使用隔离的 `build/preview-data/` 和合成状态，不调用模型、不修改正式偏好。
 - `desktop:sync` 仅用于临时开发同步，不能更新 profile 的依赖来源，也不是旧包更名迁移工具。正式安装使用 `desktop:install`；后续包管理器重装可能覆盖临时同步内容。
-- 本轮合并通过 120 项自动化测试、Windows 桌宠打包和完整归档校验；**没有在真实 DSH GUI 中安装改名包并重新做现场验收**。历史记录及本轮验证边界见[验证记录](docs/validation.md)。
+- 此前仓库合并通过 120 项测试；1.3.1 轻量分发通过 148 项自动化测试、官方运行时 ZIP 校验、隔离安装及完整包兼容性验证。**没有完成真实 DSH GUI 现场验收**。历史记录及本轮验证边界见[验证记录](docs/validation.md)。
 
 ## 版权与来源
 

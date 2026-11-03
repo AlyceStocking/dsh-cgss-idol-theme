@@ -5,9 +5,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
 
 const defaultRoot = fileURLToPath(new URL('../', import.meta.url));
-const managedNames = ['lib', 'desktop', 'package.json', 'cordis.patch.yml'];
+const managedNames = ['lib', 'desktop', 'scripts', 'package.json', 'cordis.patch.yml'];
 export const requiredSourceFiles = [
-  'package.json', 'cordis.patch.yml',
+  'package.json', 'cordis.patch.yml', 'scripts/desktop-runtime.mjs', 'lib/desktop-runtime.js',
   'lib/index.js', 'lib/client.js', 'lib/assets.js', 'lib/characters.js', 'lib/desktop-state.js', 'lib/desktop-process.js',
   'desktop/main.cjs', 'desktop/preload.cjs', 'desktop/index.html', 'desktop/style.css', 'desktop/renderer.js', 'desktop/logic.js', 'desktop/sprite-cache.js',
   ...[

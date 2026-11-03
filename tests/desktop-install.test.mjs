@@ -19,7 +19,7 @@ async function fixture(t) {
     await rm(resolved, { recursive: true, force: true });
   });
   const root = path.join(directory, 'source'), dshHome = path.join(directory, 'dsh home & tools');
-  const metadata = { name: 'dsh-cgss-idol-theme', version: '1.2.0-desktop.2', type: 'module', files: ['lib', 'desktop', 'cordis.patch.yml', ...docs], dsh: { bundle: { patch: './cordis.patch.yml' } } };
+  const metadata = { name: 'dsh-cgss-idol-theme', version: '1.2.0-desktop.2', type: 'module', files: ['lib', 'desktop/*.js', 'desktop/*.cjs', 'desktop/*.html', 'desktop/*.css', 'scripts/desktop-runtime.mjs', 'cordis.patch.yml', ...docs], dsh: { bundle: { patch: './cordis.patch.yml' } } };
   for (const relative of [...requiredSourceFiles, ...docs]) {
     const file = path.join(root, relative);
     await mkdir(path.dirname(file), { recursive: true });
@@ -90,6 +90,10 @@ test('release staging includes the complete runtime and excludes ignored files, 
   const f = await fixture(t), observed = [];
   const result = await createDesktopBundle({ ...f, pack: options => packFixture(options, { observed }) });
   assert.equal(observed.length, 1);
+  const staged = JSON.parse(await readFile(path.join(observed[0].directory, 'package.json'), 'utf8'));
+  assert.ok(staged.files.includes('desktop'), 'only full-distribution staging opts into runtime binaries');
+  const source = JSON.parse(await readFile(path.join(f.root, 'package.json'), 'utf8'));
+  assert.ok(!source.files.includes('desktop'), 'full staging must not mutate the lightweight source manifest');
   for (const relative of requiredSourceFiles) assert.ok(observed[0].files.includes(relative), relative);
   assert.ok(observed[0].files.every(name => !name.split('/').some(part => ['.gitignore', 'node_modules', 'vllm-ascend'].includes(part))));
   assert.equal(path.dirname(result.archive), path.join(f.dshHome, 'idol-desktop', 'packages'));

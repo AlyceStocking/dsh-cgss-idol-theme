@@ -52,7 +52,52 @@ dsh plugin --profile web remove dsh-yukimi-theme
 dsh plugin --profile web remove dsh-idol-theme
 ~~~
 
-### Web theme
+### Lightweight npm package (1.3.1)
+
+The lightweight package contains all Web theme and companion code, **but no Electron binaries**. Web users do not need the companion runtime; Windows x64 companion users must install it explicitly after installing the plugin. There is no `postinstall`, and plugin startup never downloads Electron automatically.
+
+- npm page: <https://www.npmjs.com/package/dsh-cgss-idol-theme>
+- 1.3.1 registry tarball: <https://registry.npmjs.org/dsh-cgss-idol-theme/-/dsh-cgss-idol-theme-1.3.1.tgz>
+- **Check the npm page/registry for published versions. If the specified version returns 404, use the GitHub installation below first.** A version in the repository does not by itself prove npm publication.
+
+Choose the profile you actually use; for desktop installation, use **DSH Desktop's own CLI**:
+
+~~~sh
+# Web theme
+dsh plugin --profile web add dsh-cgss-idol-theme@1.3.1
+# Windows companion (also requires the runtime step below)
+dsh plugin --profile desktop add dsh-cgss-idol-theme@1.3.1
+~~~
+
+### Lightweight package: explicitly install the Windows companion runtime
+
+On Windows x64, with Node.js **22.12.0 or newer** and npm, explicitly run:
+
+~~~powershell
+npx --yes --package=dsh-cgss-idol-theme@1.3.1 dsh-cgss-idol-runtime install
+npx --yes --package=dsh-cgss-idol-theme@1.3.1 dsh-cgss-idol-runtime status
+~~~
+
+If the Host uses a custom `DSH_HOME`, installation and status checks must target the same directory, for example:
+
+~~~powershell
+npx --yes --package=dsh-cgss-idol-theme@1.3.1 dsh-cgss-idol-runtime install --dsh-home "D:\DSHData"
+npx --yes --package=dsh-cgss-idol-theme@1.3.1 dsh-cgss-idol-runtime status --dsh-home "D:\DSHData"
+~~~
+
+The runtime is pinned to Electron **44.5.1 / Windows x64**, stored under `$DSH_HOME/idol-desktop/runtimes/electron-44.5.1-win32-x64/` (`DSH_HOME` defaults to `~/.dsh`), not an npx temporary directory. A valid cache of the same version is reused without downloading again. Currently, every `status` check and every Host startup that resolves the cache reads and SHA-256-verifies each file across the entire Electron cache (roughly several hundred MB). This verification is offline, but incurs disk I/O on every check/startup, not just the first validation. After installation and verification with `status`, check activation switches and **fully restart DSH Desktop and its Host**. The Host uses Electron from this fixed cache to run [desktop/main.cjs](<desktop/main.cjs>) from the currently installed plugin; retaining an npx temporary directory is unnecessary.
+
+Use `--archive` with a previously downloaded [official Electron zip](https://github.com/electron/electron/releases/download/v44.5.1/electron-v44.5.1-win32-x64.zip) for offline runtime installation:
+
+~~~powershell
+npx --yes --package=dsh-cgss-idol-theme@1.3.1 dsh-cgss-idol-runtime install --archive "D:\Downloads\electron-v44.5.1-win32-x64.zip" --dsh-home "D:\DSHData"
+~~~
+
+Online downloads and `--archive` must both pass the same pinned SHA-256 check: `9b382492dcfee91f8f9e92c91f7972550a1b95d2299cac72279dab33a600d7db`, from the [official v44.5.1 SHASUMS256.txt](https://github.com/electron/electron/releases/download/v44.5.1/SHASUMS256.txt). `--archive` only avoids downloading the runtime; the npm package and dependencies needed by npx must also be cached to run fully offline.
+
+**A smaller npm download does not mean a smaller total companion disk footprint**: first use still requires a separate Electron download and extraction. This explicit-install/cache-loading workflow has not yet been validated in a live DSH GUI; CLI installation success is not live companion acceptance. While npm is unavailable, use GitHub for the Web theme, or the published v1.3.0 complete package/source-build workflow below for the companion.
+
+### GitHub Web theme installation (when npm is unavailable)
 
 ~~~sh
 dsh plugin --profile web add github:AlyceStocking/dsh-cgss-idol-theme
@@ -62,7 +107,7 @@ Stop the old Web service, start `dsh web`, then refresh the page. Built browser 
 
 Use official plugin management rather than copying into node_modules and adding manual patch rows.
 
-### Prebuilt complete package (recommended for the Windows companion)
+### Prebuilt complete package (an alternative for the Windows companion)
 
 [GitHub Release v1.3.0](https://github.com/AlyceStocking/dsh-cgss-idol-theme/releases/tag/v1.3.0) provides the complete plugin with the Windows x64 Electron runtime and a SHA-256 checksum file. Remove old packages as described above, then install using **DSH Desktop's own CLI**:
 
@@ -70,7 +115,7 @@ Use official plugin management rather than copying into node_modules and adding 
 dsh plugin --profile desktop add "https://github.com/AlyceStocking/dsh-cgss-idol-theme/releases/download/v1.3.0/dsh-cgss-idol-theme-1.3.0.tgz"
 ```
 
-Web users may replace the profile with `web`, but the complete archive includes the large Windows runtime. Prefer the GitHub source installation above if you only need the Web theme. Check activation switches and fully restart the relevant application. A Release archive is a pinned version; later `main` commits do not change its contents.
+Web users may replace the profile with `web`, but the complete archive includes the large Windows runtime. Prefer the lightweight npm package or GitHub source installation above if you only need the Web theme. Check activation switches and fully restart the relevant application. The v1.3.0 complete package remains available and is not overwritten by the lightweight npm package; its bundled runtime needs no separate runtime-install command. A Release archive is a pinned version; later `main` commits do not change its contents.
 
 ### Build a complete Windows desktop package
 
@@ -90,7 +135,7 @@ npm run desktop:package
 npm run desktop:install
 ~~~
 
-Git sources do not include the ignored Electron binaries. Build `desktop/runtime/win32-x64/CGSS Idol Desktop.exe` first; installing GitHub sources alone does not guarantee a runnable standalone companion. If downloads fail, use `npm run desktop:package -- --electron-zip-dir <directory>` with a local Electron zip directory.
+Git sources do not include the ignored Electron binaries. This complete-package workflow still builds `desktop/runtime/win32-x64/CGSS Idol Desktop.exe` first and remains available; do not confuse it with the lightweight package's explicit runtime installation. Installing GitHub sources alone does not guarantee a runnable standalone companion. If downloads fail, use `npm run desktop:package -- --electron-zip-dir <directory>` with a local Electron zip directory.
 
 The installer verifies the complete runtime, stores an immutable content-addressed archive containing lib, desktop and Electron under `$DSH_HOME/idol-desktop/packages/`, then invokes **DSH Desktop's own CLI** to update the desktop profile. Keep that archive for dependency reinstalls. Harness program files are not modified. To create an archive without installation: `npm run desktop:install -- --bundle-only`.
 
@@ -100,9 +145,10 @@ Updating an existing package can preserve disabled switches. Successful installa
 
 - Edit non-generated sections of [the client](lib/client.js) for page logic. After asset/catalog changes, run `npm run build:characters` and `npm run build:client`, and commit generated output for GitHub installs.
 - `npm run check` validates syntax and generated-data freshness. `npm test` covers cleanup, character switching, dialogue, notices, preferences, image-loading races, window bounds and package identity.
+- `npm run pack:npm` builds and checks the lightweight archive, rejecting bundled Electron binaries and archives of 10 MB or larger. Full distributions still use `desktop:package` and `desktop:install -- --bundle-only`.
 - `npm run desktop:preview` uses synthetic state and isolated `build/preview-data/`; it does not call a model or alter production preferences.
 - `desktop:sync` is only a temporary development copy, not a dependency-source update or an old-package rename migration. Prefer `desktop:install` for managed installation; dependency reinstalls may overwrite temporary copies.
-- This integration passed 120 automated tests, Windows packaging and full-archive validation. **The renamed package was not installed and revalidated in a live DSH GUI during this merge.** See [validation records](docs/validation.md) for historical evidence and current boundaries.
+- The earlier repository merge passed 120 tests. The 1.3.1 lightweight distribution passed 148 automated tests, official runtime ZIP validation, isolated installation and full-package compatibility checks. **Live DSH GUI acceptance has not been completed.** See [validation records](docs/validation.md) for historical evidence and current boundaries.
 
 ## Rights and sources
 

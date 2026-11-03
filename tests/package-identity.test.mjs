@@ -17,7 +17,11 @@ test('renamed package, lockfile, bundle patch and browser registration agree', a
   assert.equal(metadata.dsh.bundle.patch, './cordis.patch.yml');
   assert.equal(metadata.dsh.client.platform, 'web');
   for (const entry of Object.values(metadata.exports)) await access(new URL(`../${entry}`, import.meta.url));
-  for (const file of ['lib', 'desktop', 'cordis.patch.yml', 'README.md', 'README.en.md', 'LICENSE']) assert.ok(metadata.files.includes(file));
+  for (const file of ['lib', 'desktop/*.cjs', 'desktop/*.js', 'desktop/*.html', 'desktop/*.css', 'scripts/desktop-runtime.mjs', 'cordis.patch.yml', 'README.md', 'README.en.md', 'LICENSE']) assert.ok(metadata.files.includes(file));
+  assert.ok(!metadata.files.includes('desktop'), 'npm must not ship the whole runtime directory');
+  assert.equal(metadata.bin['dsh-cgss-idol-runtime'], './scripts/desktop-runtime.mjs');
+  for (const hook of ['preinstall', 'install', 'postinstall', 'prepare']) assert.equal(metadata.scripts[hook], undefined, `no implicit download in ${hook}`);
+  for (const entry of Object.values(metadata.bin)) await access(new URL(`../${entry}`, import.meta.url));
   const patch = await read('cordis.patch.yml');
   assert.match(patch, /id: cgss-idol-theme/);
   assert.ok(patch.includes(`name: '${metadata.name}'`));

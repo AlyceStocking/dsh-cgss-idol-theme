@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { constants, createReadStream } from 'node:fs';
-import { copyFile, cp, lstat, mkdir, mkdtemp, readFile, readdir, realpath } from 'node:fs/promises';
+import { copyFile, cp, lstat, mkdir, mkdtemp, readFile, readdir, realpath, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -10,7 +10,7 @@ import { requiredSourceFiles } from './sync-desktop.mjs';
 
 const defaultRoot = fileURLToPath(new URL('../', import.meta.url));
 const defaultHome = () => path.resolve(process.env.DSH_HOME || path.join(homedir(), '.dsh'));
-const releaseNames = ['lib', 'desktop', 'package.json', 'cordis.patch.yml', 'README.md', 'README.en.md', 'LICENSE'];
+const releaseNames = ['lib', 'desktop', 'scripts', 'package.json', 'cordis.patch.yml', 'README.md', 'README.en.md', 'LICENSE'];
 const excluded = new Set(['node_modules', '.git', '.gitignore', '.npmignore']);
 const requiredArchiveFiles = [...requiredSourceFiles, 'README.md', 'README.en.md', 'LICENSE'];
 const within = (base, candidate) => {
@@ -139,7 +139,7 @@ async function verifyArchive(archive) {
       const parts = name.replace(/\/$/u, '').split('/');
       if (parts[0] !== 'package' || parts.some(part => !part || part === '.' || part === '..' || /[\\\u0000-\u001f]/u.test(part)) || parts.some(part => excluded.has(part))) throw new Error(`Unsafe tar entry: ${name}`);
       const relative = parts.slice(1).join('/');
-      if (relative && !['lib', 'desktop'].includes(parts[1]) && !releaseNames.includes(relative)) throw new Error(`Unexpected release entry: ${relative}`);
+      if (relative && !['lib', 'desktop'].includes(parts[1]) && !releaseNames.includes(relative) && relative !== 'scripts/desktop-runtime.mjs') throw new Error(`Unexpected release entry: ${relative}`);
       if (type !== '5') {
         if (!relative || files.has(relative)) throw new Error(`Duplicate or invalid tar file: ${name}`);
         if (requiredArchiveFiles.includes(relative) && !dataSize) throw new Error(`Empty archive component: ${relative}`);
@@ -167,6 +167,9 @@ export async function createDesktopBundle({ root = defaultRoot, dshHome = defaul
   const directory = path.join(stage, 'package'), destination = path.join(stage, 'output');
   await mkdir(directory); await mkdir(destination);
   for (const name of releaseNames) await cp(path.join(root, name), path.join(directory, name), { recursive: true, errorOnExist: true, force: false, filter: source => !excluded.has(path.basename(source)) });
+  // npm ships only sources; the explicit complete-distribution command opts into binaries.
+  const releaseMetadata = { ...metadata, files: [...new Set([...metadata.files, 'desktop'])] };
+  await writeFile(path.join(directory, 'package.json'), JSON.stringify(releaseMetadata, null, 2) + '\n');
   const packed = await pack({ directory, destination });
   const archive = path.resolve(typeof packed === 'string' ? packed : packed.archive);
   if (!within(destination, archive) || (await lstat(archive)).isSymbolicLink() || !(await lstat(archive)).isFile()) throw new Error('The packer did not return a regular archive inside its output directory.');
