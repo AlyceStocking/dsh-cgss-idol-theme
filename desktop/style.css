@@ -31,7 +31,21 @@ button:focus-visible, #pet:focus-visible { outline: 2px solid #70e4ec; outline-o
 .settings-body p { font-size: 11px; color: #65799e; margin: 0 0 8px; }
 .settings-body h2 { font-size: 12px; margin: 12px 0 5px; }
 .settings-body label { display: block; font-size: 12px; margin: 6px 0 3px; }
-#character-search, #character-select { width: 100%; box-sizing: border-box; border: 1px solid #8aafd2; border-radius: 5px; padding: 5px; background: #eef1f8; color: #2e4673; }
+.idol-picker { margin-bottom: 6px; }
+.idol-picker-row { display: flex; align-items: stretch; gap: 6px; }
+#character-search { min-width: 0; flex: 1; width: 100%; font: inherit; border: 1px solid #8aafd2; border-radius: 5px; padding: 6px 8px; background: #eef1f8; color: #2e4673; }
+#character-search:focus-visible { outline: 2px solid #29449b; outline-offset: 1px; }
+#character-favorite { flex: 0 0 34px; border: 1px solid #8aafd2; border-radius: 5px; padding: 0; font-size: 24px; line-height: 30px; color: #526783; background: #eef1f8; }
+#character-favorite.is-favorite, .idol-option-star { color: #de7900; }
+#character-options, #character-empty { margin-top: 4px; border: 1px solid #8aafd2; border-radius: 5px; background: #f5f8ff; }
+#character-options { max-height: 172px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.idol-option { display: flex; align-items: center; gap: 5px; padding: 6px 8px; cursor: pointer; color: #2e4673; }
+.idol-option-star { flex: 0 0 17px; font-size: 16px; }
+.idol-option[aria-selected="true"] { font-weight: 600; }
+.idol-option.is-active, .idol-option:hover { background: #dce9fb; outline: 1px solid #91afd8; outline-offset: -1px; }
+.idol-option[aria-disabled="true"] { color: #8994a8; cursor: not-allowed; }
+#character-empty { padding: 10px; color: #65799e; }
+#favorite-note { margin-top: 4px; }
 #character-status { min-height: 1em; font-size: 11px; }
 .toggles { display: flex; gap: 8px; }
 .toggles button { border: 1px solid #8aafd2; border-radius: 20px; background: #dae7f6; color: #2e4673; font-size: 11px; padding: 4px 10px; }

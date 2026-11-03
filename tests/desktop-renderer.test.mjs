@@ -4,10 +4,11 @@ import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import * as assets from '../lib/assets.js';
 import * as characters from '../lib/characters.js';
+import { createIdolPicker } from '../desktop/idol-picker.js';
 
 const renderer = await readFile(new URL('../desktop/renderer.js', import.meta.url), 'utf8');
 const imports = renderer.match(/^import .+;\r?$/gm) || [];
-assert.equal(imports.length, 2, 'the harness supplies the renderer asset and sprite-cache imports');
+assert.equal(imports.length, 3, 'the harness supplies assets, sprite-cache and the real idol picker');
 const source = renderer.replace(/^import .+;\r?\n/gm, '');
 const plain = value => JSON.parse(JSON.stringify(value));
 const flush = async () => { for (let index = 0; index < 12; index++) await Promise.resolve(); };
@@ -65,6 +66,11 @@ class Element {
     const event = { button: 0, pointerId: 1, screenX: 250, screenY: 600, target: this, preventDefault() {}, ...data };
     for (const listener of this.listeners.get(type) || []) listener(event);
   }
+  setAttribute(name, value) { (this.attributes ??= {})[name] = String(value); }
+  getAttribute(name) { return this.attributes?.[name] ?? null; }
+  removeAttribute(name) { delete this.attributes?.[name]; }
+  select() {}
+  contains(node) { return node === this || this.children.some(child => child.contains?.(node)); }
   setPointerCapture() {}
   getBoundingClientRect() {
     const isPet = this.id === 'pet' || this.id === 'pet-wrap';
@@ -108,7 +114,7 @@ function controlledCache(initialUrl) {
 
 async function harness(mode = 'pet') {
   const clock = new Clock(), cache = controlledCache(sprite(7));
-  const ids = ['settings-header', 'pet', 'pet-wrap', 'desktop', 'notices', 'notice-list', 'notice-heading', 'settings', 'dialogue', 'fallback', 'running', 'close-settings', 'toggle-sign', 'toggle-mobamas', 'outfits', 'backgrounds', 'character-search', 'character-select', 'character-status'];
+  const ids = ['settings-header', 'pet', 'pet-wrap', 'desktop', 'notices', 'notice-list', 'notice-heading', 'settings', 'dialogue', 'fallback', 'running', 'close-settings', 'toggle-sign', 'toggle-mobamas', 'outfits', 'backgrounds', 'character-search', 'idol-picker', 'character-options', 'character-favorite', 'character-empty', 'character-status'];
   const nodes = Object.fromEntries(ids.map(id => [id, new Element(id)]));
   for (const id of ['notices', 'settings', 'dialogue', 'fallback', 'running']) nodes[id].hidden = true;
   let preferences = { cardIndex: 7, petitIndex: 0, bg: assets.CARDS[23].url, showSign: true, showMobamas: false };
@@ -122,7 +128,7 @@ async function harness(mode = 'pet') {
     setRegions() {}, shown() {}, drag() {}, openSession() {},
   };
   const sandbox = {
-    __assets: characters, __cache: cache,
+    __assets: characters, __cache: cache, createIdolPicker: options => createIdolPicker({ ...options, eventTarget: undefined }),
     window: { yukimiDesktop: api, addEventListener() {} },
     document: { getElementById: id => nodes[id], createElement: () => new Element(), addEventListener() {} },
     innerWidth: 360, innerHeight: 600, getComputedStyle: () => ({ transform: 'none' }),
@@ -131,6 +137,8 @@ async function harness(mode = 'pet') {
     setInterval: (callback, delay) => clock.schedule(callback, delay, delay), clearInterval: id => clock.clear(id),
     requestAnimationFrame: callback => clock.schedule(() => callback(clock.now), 16), cancelAnimationFrame: id => clock.clear(id),
   };
+  for (const node of Object.values(nodes)) node.ownerDocument = sandbox.document;
+  nodes['idol-picker'].append(nodes['character-search'], nodes['character-options'], nodes['character-favorite'], nodes['character-empty']);
   await vm.runInNewContext(`(async () => { const { CHARACTER_LIST, DEFAULT_APPEARANCE, getCharacter, normalizeAppearance, spriteUrl, PLACEHOLDER, createLinePicker, visualOf, sceneText, matchesCharacter } = __assets; const createSpriteCache = () => __cache;\n${source}\n})()`, sandbox, { filename: 'desktop/renderer.js' });
   await flush();
   assert.equal(nodes.pet.src, sprite(7), 'the initial decoded sprite must be visible');
@@ -143,6 +151,14 @@ async function harness(mode = 'pet') {
       nodes.pet.dispatch('pointerdown'); nodes.pet.dispatch('pointerup');
       await flush();
     },
+    chooseCharacter(id) {
+      nodes['character-search'].dispatch('focus');
+      nodes['character-search'].value = id;
+      nodes['character-search'].dispatch('input');
+      const option = nodes['character-options'].children.find(node => node.getAttribute('aria-label')?.startsWith(characters.getCharacter(id).name));
+      assert.ok(option, `choice exists for ${id}`);
+      option.dispatch('click');
+    },
     select(cardIndex) { nodes.outfits.children[cardIndex].dispatch('click'); },
     state(patch) { preferences = { ...preferences, ...patch }; stateListener(packet()); },
   };
@@ -152,7 +168,7 @@ test('switching character waits for decode and rebuilds only the selected wardro
   const h = await harness();
   const next = characters.normalizeAppearance({ characterId: 'arisu' });
   const target = characters.spriteUrl(next);
-  h.nodes['character-select'].value = 'arisu'; h.nodes['character-select'].dispatch('change');
+  h.chooseCharacter('arisu');
   await flush();
   assert.equal(h.nodes.pet.src, sprite(7));
   assert.equal(h.updates.length, 0);
@@ -162,7 +178,7 @@ test('switching character waits for decode and rebuilds only the selected wardro
   assert.equal(h.nodes.outfits.children.length, 14);
   assert.equal(h.nodes.backgrounds.children.length, 28);
   assert.equal(h.preferences.bg, next.bg);
-  h.nodes['character-select'].value = 'yukimi'; h.nodes['character-select'].dispatch('change');
+  h.chooseCharacter('yukimi');
   await flush();
   assert.equal(h.preferences.characterId, 'yukimi');
   assert.equal(h.nodes.outfits.children.length, 13);
@@ -170,13 +186,30 @@ test('switching character waits for decode and rebuilds only the selected wardro
 
 test('failed and superseded character loads never replace the current pet', async () => {
   const h = await harness(), target = characters.spriteUrl(characters.normalizeAppearance({ characterId: 'arisu' }));
-  h.nodes['character-select'].value = 'arisu'; h.nodes['character-select'].dispatch('change');
+  h.chooseCharacter('arisu');
   h.cache.fail(target); await flush();
   assert.equal(h.nodes.pet.src, sprite(7)); assert.equal(h.updates.length, 0);
-  h.nodes['character-select'].value = 'arisu'; h.nodes['character-select'].dispatch('change');
-  h.nodes['character-select'].value = 'yukimi'; h.nodes['character-select'].dispatch('change');
+  assert.equal(h.nodes['character-search'].value, characters.getCharacter('yukimi').name, 'failed selection restores the displayed name');
+  assert.equal(h.nodes['character-favorite'].getAttribute('aria-label'), '收藏' + characters.getCharacter('yukimi').name, 'favorite target rolls back too');
+  h.chooseCharacter('arisu');
+  h.chooseCharacter('yukimi');
   await flush(); h.cache.decoded(target); await flush();
   assert.equal(h.preferences.characterId, 'yukimi'); assert.equal(h.nodes.pet.src, sprite(7));
+});
+
+test('a newer outfit request rolls back a pending character choice and allows retry', async () => {
+  const h = await harness();
+  const target = characters.spriteUrl(characters.normalizeAppearance({ characterId: 'arisu' }));
+  h.chooseCharacter('arisu');
+  h.select(1);
+  h.cache.decoded(sprite(1)); await flush();
+  assert.equal(h.preferences.characterId, 'yukimi');
+  assert.equal(h.nodes['character-search'].value, characters.getCharacter('yukimi').name);
+  assert.equal(h.nodes['character-favorite'].getAttribute('aria-label'), '收藏' + characters.getCharacter('yukimi').name);
+  h.cache.decoded(target); await flush();
+  assert.equal(h.preferences.characterId, 'yukimi');
+  h.chooseCharacter('arisu'); await flush();
+  assert.equal(h.preferences.characterId, 'arisu', 'the cancelled character can be selected again');
 });
 
 test('a delayed flip cannot carry an outfit into a different character', async () => {
@@ -310,7 +343,7 @@ test('the settings window stays open while idle and accepts character choices', 
   assert.equal(h.nodes['pet-wrap'].hidden, true);
   await h.clock.advance(16000);
   assert.deepEqual(h.panels, []);
-  h.nodes['character-select'].value = 'arisu'; h.nodes['character-select'].dispatch('change');
+  h.chooseCharacter('arisu');
   h.cache.decoded(characters.spriteUrl(characters.normalizeAppearance({ characterId: 'arisu' }))); await flush();
   assert.equal(h.preferences.characterId, 'arisu');
   h.nodes['close-settings'].dispatch('click'); assert.deepEqual(h.panels, [false]);

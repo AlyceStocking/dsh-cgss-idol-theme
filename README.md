@@ -8,6 +8,8 @@
 
 ## 功能与覆盖范围
 
+- **偶像查询与收藏（1.3.2）**：Web 面板与 Windows 桌宠均使用单个可搜索下拉框，输入姓名或罗马字即可筛选。点击旁边的五角星收藏当前偶像，已收藏显示橙色实心星；下拉列表为收藏角色加星标并优先排列，组内保持目录顺序。支持方向键、Enter 选择与 Escape 关闭。收藏保存在各自的本地存储中，重开后保留；Web 与桌宠之间不共享收藏。
+
 - **角色目录**：列出 190 位偶像，当前 **188 位可选**。向井拓海、村上巴因采集时返回 HTTP 567 暂列为“待收录”，不是断言其没有素材。另有 8 套缺少配套图标元数据的服装暂被排除。详见[收录报告](research/roster/README.md)与[例外清单](research/roster/coverage.json)。
 - **素材目录**：可选角色包含 1,850 套服装、7,400 张小人姿态图与 3,702 张 CGSS 背景的 URL。印象色、签名、Mobamas 卡片、贴纸与过场动画按角色数据提供；并非每位角色都有贴纸或过场动画。
 - **角色配色与阅读**：强调色和光晕跟随角色印象色，适配浅色/深色；聊天内容、工具和部分管理页面使用半透明磨砂底板，历史记录上下渐隐，输入卡片独立遮挡滚动内容。
@@ -31,7 +33,7 @@
 - 支持跨显示器拖动、屏幕边界约束和透明空白区域鼠标穿透。小人位置与设置面板位置独立保存。
 - 只预热当前角色的当前服装与下一套，最多 8 张；解码缓存有并发与容量上限。换装等待解码，失败时保留原图；设置窗口不批量预热服装。
 
-桌面偏好保存在 `$DSH_HOME/idol-desktop/preferences.json`，并同步到同一 desktop profile 的页面。普通 Web 页面的偏好只保留在当前页面，刷新会恢复默认值。
+桌面偏好保存在 `$DSH_HOME/idol-desktop/preferences.json`，并同步到同一 desktop profile 的页面。普通 Web 页面的主题偏好只保留在当前页面，刷新会恢复默认值；偶像收藏单独保存在本地存储中，不随刷新清空。
 
 Host 与辅助程序通过带随机握手的本机命名管道通信，页面使用 DSH 认证 RPC。保留旧 `/yukimi` RPC 与部分内部命名以兼容现有实现；没有新增 TCP 监听端口。传给桌宠的是会话标识、标题、状态和预设台词，不包含聊天正文。
 
@@ -52,21 +54,21 @@ dsh plugin --profile web remove dsh-yukimi-theme
 dsh plugin --profile web remove dsh-idol-theme
 ```
 
-### 轻量 npm 包（1.3.1）
+### 轻量 npm 包（1.3.2）
 
 轻量包包含全部 Web 主题与桌宠代码，**不包含 Electron 二进制**。Web 用户无需安装桌宠运行时；Windows x64 桌宠用户需在安装插件后显式安装运行时。没有 `postinstall`，插件启动也不会自动下载 Electron。
 
 - npm 页面：<https://www.npmjs.com/package/dsh-cgss-idol-theme>
-- 1.3.1 registry tarball：<https://registry.npmjs.org/dsh-cgss-idol-theme/-/dsh-cgss-idol-theme-1.3.1.tgz>
+- 1.3.2 registry tarball：<https://registry.npmjs.org/dsh-cgss-idol-theme/-/dsh-cgss-idol-theme-1.3.2.tgz>
 - **npm 可用版本以页面/registry 为准；若指定版本返回 404，请先使用下方 GitHub 安装方式。** 仓库中的版本号不等于 npm 已发布。
 
 按实际使用的 profile 二选一；desktop 安装使用 **DSH Desktop 自带 CLI**：
 
 ```sh
 # Web 主题
-dsh plugin --profile web add dsh-cgss-idol-theme@1.3.1
+dsh plugin --profile web add dsh-cgss-idol-theme@1.3.2
 # Windows 桌宠（还需下一步安装运行时）
-dsh plugin --profile desktop add dsh-cgss-idol-theme@1.3.1
+dsh plugin --profile desktop add dsh-cgss-idol-theme@1.3.2
 ```
 
 ### 轻量包：显式安装 Windows 桌宠运行时
@@ -74,15 +76,15 @@ dsh plugin --profile desktop add dsh-cgss-idol-theme@1.3.1
 在 Windows x64 上使用 Node.js **22.12.0 或以上**及 npm，显式运行：
 
 ```powershell
-npx --yes --package=dsh-cgss-idol-theme@1.3.1 dsh-cgss-idol-runtime install
-npx --yes --package=dsh-cgss-idol-theme@1.3.1 dsh-cgss-idol-runtime status
+npx --yes --package=dsh-cgss-idol-theme@1.3.2 dsh-cgss-idol-runtime install
+npx --yes --package=dsh-cgss-idol-theme@1.3.2 dsh-cgss-idol-runtime status
 ```
 
 若 Host 使用自定义 `DSH_HOME`，安装和状态检查必须指向同一目录，例如：
 
 ```powershell
-npx --yes --package=dsh-cgss-idol-theme@1.3.1 dsh-cgss-idol-runtime install --dsh-home "D:\DSHData"
-npx --yes --package=dsh-cgss-idol-theme@1.3.1 dsh-cgss-idol-runtime status --dsh-home "D:\DSHData"
+npx --yes --package=dsh-cgss-idol-theme@1.3.2 dsh-cgss-idol-runtime install --dsh-home "D:\DSHData"
+npx --yes --package=dsh-cgss-idol-theme@1.3.2 dsh-cgss-idol-runtime status --dsh-home "D:\DSHData"
 ```
 
 运行时固定为 Electron **44.5.1 / Windows x64**，保存在 `$DSH_HOME/idol-desktop/runtimes/electron-44.5.1-win32-x64/`（默认 `DSH_HOME` 为 `~/.dsh`），而不是 npx 临时目录。有效的同版本缓存直接复用，不重复下载。当前每次执行 `status`，以及 Host 启动时解析缓存，都会逐文件读取并进行 SHA-256 校验，覆盖整个 Electron 缓存（约几百 MB）；此校验不联网，但每次检查/启动都有磁盘 I/O 成本，并非仅首次验证。安装并用 `status` 确认后，检查插件开关并**完整重启 DSH Desktop 与 Host**；Host 使用固定缓存中的 Electron 运行当前已安装插件的 [desktop/main.cjs](<desktop/main.cjs>)，无需保留 npx 临时目录。
@@ -90,7 +92,7 @@ npx --yes --package=dsh-cgss-idol-theme@1.3.1 dsh-cgss-idol-runtime status --dsh
 可通过 `--archive` 使用预先下载的[官方 Electron zip](https://github.com/electron/electron/releases/download/v44.5.1/electron-v44.5.1-win32-x64.zip)，离线安装运行时：
 
 ```powershell
-npx --yes --package=dsh-cgss-idol-theme@1.3.1 dsh-cgss-idol-runtime install --archive "D:\Downloads\electron-v44.5.1-win32-x64.zip" --dsh-home "D:\DSHData"
+npx --yes --package=dsh-cgss-idol-theme@1.3.2 dsh-cgss-idol-runtime install --archive "D:\Downloads\electron-v44.5.1-win32-x64.zip" --dsh-home "D:\DSHData"
 ```
 
 在线下载与 `--archive` 都必须通过相同的固定 SHA-256 校验：`9b382492dcfee91f8f9e92c91f7972550a1b95d2299cac72279dab33a600d7db`，来源为[官方 v44.5.1 SHASUMS256.txt](https://github.com/electron/electron/releases/download/v44.5.1/SHASUMS256.txt)。`--archive` 只免除运行时下载；npx 所需的 npm 包及依赖也必须已缓存，才能在完全离线时执行。

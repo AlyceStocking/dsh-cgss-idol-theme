@@ -8,6 +8,8 @@ This is the original `dsh-yukimi-theme` repository with `dsh-idol-theme` integra
 
 ## Features and coverage
 
+- **Idol search and favorites (1.3.2):** Both Web and Windows settings use one searchable dropdown. Filter by name or romanization, and use the five-point star beside it to favorite the current idol. Favorites have an orange filled star, are marked in the dropdown, and appear first while preserving catalog order within each group. Arrow keys, Enter and Escape are supported. Favorites persist in local storage for each surface; Web and desktop favorites are not shared.
+
 - **190 listed idols, 188 selectable.** Takumi Mukai and Tomoe Murakami remain disabled because the metadata collection returned HTTP 567, not because they are known to lack assets. Eight outfits without matching icon metadata are also excluded. See the [roster report](research/roster/README.md) and [coverage exceptions](research/roster/coverage.json).
 - **Asset catalog:** 1,850 selectable outfits, 7,400 petit poses and 3,702 CGSS background URLs. Character colors, signatures, Mobamas cards, stickers and transition animations are used where available; not every idol has a sticker or animation.
 - **Character styling:** impression-color accents and glows, light/dark adaptation, translucent frosted reading surfaces, fading history edges and a separate composer surface.
@@ -31,7 +33,7 @@ The separate companion starts only in the **desktop profile on Windows**; an ord
 - Supports multi-monitor dragging, screen bounds and click-through transparent regions. Pet and settings-window positions are saved separately.
 - Warms only the current and next outfit for the current idol (up to eight poses), with bounded decoding concurrency/cache size. Outfit changes wait for decoding; failure preserves the current image. The settings window does not batch-preload outfits.
 
-Desktop preferences live at `$DSH_HOME/idol-desktop/preferences.json` and sync to pages in the same desktop profile. Ordinary Web preferences live only in the current page and reset on refresh.
+Desktop preferences live at `$DSH_HOME/idol-desktop/preferences.json` and sync to pages in the same desktop profile. Ordinary Web theme preferences live only in the current page and reset on refresh; idol favorites are stored separately in local storage and survive refreshes.
 
 Host/helper communication uses a local named pipe with a random handshake; pages use authenticated DSH RPC. The legacy `/yukimi` RPC and some internal names remain for compatibility. No additional TCP listener is opened. The helper receives session identifiers, titles, status and preset lines—not chat message bodies.
 
@@ -52,21 +54,21 @@ dsh plugin --profile web remove dsh-yukimi-theme
 dsh plugin --profile web remove dsh-idol-theme
 ~~~
 
-### Lightweight npm package (1.3.1)
+### Lightweight npm package (1.3.2)
 
 The lightweight package contains all Web theme and companion code, **but no Electron binaries**. Web users do not need the companion runtime; Windows x64 companion users must install it explicitly after installing the plugin. There is no `postinstall`, and plugin startup never downloads Electron automatically.
 
 - npm page: <https://www.npmjs.com/package/dsh-cgss-idol-theme>
-- 1.3.1 registry tarball: <https://registry.npmjs.org/dsh-cgss-idol-theme/-/dsh-cgss-idol-theme-1.3.1.tgz>
+- 1.3.2 registry tarball: <https://registry.npmjs.org/dsh-cgss-idol-theme/-/dsh-cgss-idol-theme-1.3.2.tgz>
 - **Check the npm page/registry for published versions. If the specified version returns 404, use the GitHub installation below first.** A version in the repository does not by itself prove npm publication.
 
 Choose the profile you actually use; for desktop installation, use **DSH Desktop's own CLI**:
 
 ~~~sh
 # Web theme
-dsh plugin --profile web add dsh-cgss-idol-theme@1.3.1
+dsh plugin --profile web add dsh-cgss-idol-theme@1.3.2
 # Windows companion (also requires the runtime step below)
-dsh plugin --profile desktop add dsh-cgss-idol-theme@1.3.1
+dsh plugin --profile desktop add dsh-cgss-idol-theme@1.3.2
 ~~~
 
 ### Lightweight package: explicitly install the Windows companion runtime
@@ -74,15 +76,15 @@ dsh plugin --profile desktop add dsh-cgss-idol-theme@1.3.1
 On Windows x64, with Node.js **22.12.0 or newer** and npm, explicitly run:
 
 ~~~powershell
-npx --yes --package=dsh-cgss-idol-theme@1.3.1 dsh-cgss-idol-runtime install
-npx --yes --package=dsh-cgss-idol-theme@1.3.1 dsh-cgss-idol-runtime status
+npx --yes --package=dsh-cgss-idol-theme@1.3.2 dsh-cgss-idol-runtime install
+npx --yes --package=dsh-cgss-idol-theme@1.3.2 dsh-cgss-idol-runtime status
 ~~~
 
 If the Host uses a custom `DSH_HOME`, installation and status checks must target the same directory, for example:
 
 ~~~powershell
-npx --yes --package=dsh-cgss-idol-theme@1.3.1 dsh-cgss-idol-runtime install --dsh-home "D:\DSHData"
-npx --yes --package=dsh-cgss-idol-theme@1.3.1 dsh-cgss-idol-runtime status --dsh-home "D:\DSHData"
+npx --yes --package=dsh-cgss-idol-theme@1.3.2 dsh-cgss-idol-runtime install --dsh-home "D:\DSHData"
+npx --yes --package=dsh-cgss-idol-theme@1.3.2 dsh-cgss-idol-runtime status --dsh-home "D:\DSHData"
 ~~~
 
 The runtime is pinned to Electron **44.5.1 / Windows x64**, stored under `$DSH_HOME/idol-desktop/runtimes/electron-44.5.1-win32-x64/` (`DSH_HOME` defaults to `~/.dsh`), not an npx temporary directory. A valid cache of the same version is reused without downloading again. Currently, every `status` check and every Host startup that resolves the cache reads and SHA-256-verifies each file across the entire Electron cache (roughly several hundred MB). This verification is offline, but incurs disk I/O on every check/startup, not just the first validation. After installation and verification with `status`, check activation switches and **fully restart DSH Desktop and its Host**. The Host uses Electron from this fixed cache to run [desktop/main.cjs](<desktop/main.cjs>) from the currently installed plugin; retaining an npx temporary directory is unnecessary.
@@ -90,7 +92,7 @@ The runtime is pinned to Electron **44.5.1 / Windows x64**, stored under `$DSH_H
 Use `--archive` with a previously downloaded [official Electron zip](https://github.com/electron/electron/releases/download/v44.5.1/electron-v44.5.1-win32-x64.zip) for offline runtime installation:
 
 ~~~powershell
-npx --yes --package=dsh-cgss-idol-theme@1.3.1 dsh-cgss-idol-runtime install --archive "D:\Downloads\electron-v44.5.1-win32-x64.zip" --dsh-home "D:\DSHData"
+npx --yes --package=dsh-cgss-idol-theme@1.3.2 dsh-cgss-idol-runtime install --archive "D:\Downloads\electron-v44.5.1-win32-x64.zip" --dsh-home "D:\DSHData"
 ~~~
 
 Online downloads and `--archive` must both pass the same pinned SHA-256 check: `9b382492dcfee91f8f9e92c91f7972550a1b95d2299cac72279dab33a600d7db`, from the [official v44.5.1 SHASUMS256.txt](https://github.com/electron/electron/releases/download/v44.5.1/SHASUMS256.txt). `--archive` only avoids downloading the runtime; the npm package and dependencies needed by npx must also be cached to run fully offline.

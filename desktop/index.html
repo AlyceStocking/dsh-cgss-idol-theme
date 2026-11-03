@@ -18,8 +18,17 @@
       <header id="settings-header"><span>偶像设置</span><img id="character-stamp" alt="" hidden><button id="close-settings" aria-label="关闭设置">×</button></header>
       <div class="settings-body">
         <p>拖动标题栏移动面板 · × 关闭</p>
-        <label for="character-search">搜索偶像</label><input id="character-search" type="search" placeholder="名字 / 罗马字" autocomplete="off">
-        <label for="character-select">偶像</label><select id="character-select"></select><p id="character-status" role="status"></p>
+        <label for="character-search">偶像</label>
+        <div id="idol-picker" class="idol-picker">
+          <div class="idol-picker-row">
+            <input id="character-search" type="text" role="combobox" aria-autocomplete="list" aria-haspopup="listbox" aria-controls="character-options" aria-expanded="false" aria-describedby="favorite-note" placeholder="搜索名字 / 罗马字" autocomplete="off" spellcheck="false">
+            <button id="character-favorite" type="button" aria-label="收藏当前偶像" aria-pressed="false">☆</button>
+          </div>
+          <div id="character-options" role="listbox" aria-label="偶像列表" hidden></div>
+          <div id="character-empty" role="status" hidden>没有匹配的偶像</div>
+        </div>
+        <p id="favorite-note">收藏仅保存在此桌面端，与 Web 端独立。</p>
+        <p id="character-status" role="status"></p>
         <img id="character-anim" alt="" hidden>
         <div class="toggles"><button id="toggle-sign"></button><button id="toggle-mobamas"></button></div>
         <h2>小人</h2><div id="outfits" class="outfits"></div>

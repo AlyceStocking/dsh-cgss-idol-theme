@@ -36,6 +36,12 @@ test('renamed package, lockfile, bundle patch and browser registration agree', a
   assert.equal(typeof host.apply, 'function');
 });
 
+test('desktop picker module is allowed by the custom protocol', async () => {
+  const host = await read('desktop/main.cjs');
+  assert.ok(host.includes("['yukimi://pet/desktop/idol-picker.js', { file: path.join(__dirname, 'idol-picker.js')"));
+  await access(new URL('../desktop/idol-picker.js', import.meta.url));
+});
+
 test('desktop packaging, loading and archive validation use the same executable', async () => {
   const executable = 'CGSS Idol Desktop.exe';
   assert.ok(requiredSourceFiles.includes(`desktop/runtime/win32-x64/${executable}`));

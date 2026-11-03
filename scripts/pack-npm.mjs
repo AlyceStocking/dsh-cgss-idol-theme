@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 export function verifyLightweightReport(report) {
   const files = new Set(report.files.map(file => file.path));
-  for (const required of ['package.json', 'cordis.patch.yml', 'lib/index.js', 'lib/client.js', 'lib/characters.js', 'lib/desktop-process.js', 'lib/desktop-runtime.js', 'scripts/desktop-runtime.mjs', 'desktop/main.cjs', 'desktop/preload.cjs', 'desktop/renderer.js', 'desktop/index.html', 'desktop/style.css', 'desktop/sprite-cache.js', 'README.md', 'README.en.md', 'LICENSE']) {
+  for (const required of ['package.json', 'cordis.patch.yml', 'lib/index.js', 'lib/client.js', 'lib/characters.js', 'lib/desktop-process.js', 'lib/desktop-runtime.js', 'scripts/desktop-runtime.mjs', 'desktop/main.cjs', 'desktop/preload.cjs', 'desktop/renderer.js', 'desktop/index.html', 'desktop/style.css', 'desktop/sprite-cache.js', 'desktop/idol-picker.js', 'README.md', 'README.en.md', 'LICENSE']) {
     if (!files.has(required)) throw new Error('Missing lightweight package component: ' + required);
   }
   for (const file of files) {

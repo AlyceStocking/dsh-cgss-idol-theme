@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { verifyLightweightReport } from '../scripts/pack-npm.mjs';
-const paths = ['package.json', 'cordis.patch.yml', 'lib/index.js', 'lib/client.js', 'lib/characters.js', 'lib/desktop-process.js', 'lib/desktop-runtime.js', 'scripts/desktop-runtime.mjs', 'desktop/main.cjs', 'desktop/preload.cjs', 'desktop/renderer.js', 'desktop/index.html', 'desktop/style.css', 'desktop/sprite-cache.js', 'README.md', 'README.en.md', 'LICENSE'];
+const paths = ['package.json', 'cordis.patch.yml', 'lib/index.js', 'lib/client.js', 'lib/characters.js', 'lib/desktop-process.js', 'lib/desktop-runtime.js', 'scripts/desktop-runtime.mjs', 'desktop/main.cjs', 'desktop/preload.cjs', 'desktop/renderer.js', 'desktop/index.html', 'desktop/style.css', 'desktop/sprite-cache.js', 'desktop/idol-picker.js', 'README.md', 'README.en.md', 'LICENSE'];
 const report = () => ({ size: 6_500_000, files: paths.map(path => ({ path })) });
 
 test('lightweight package validation retains Web, desktop and explicit installer code', () => {
@@ -9,7 +9,7 @@ test('lightweight package validation retains Web, desktop and explicit installer
 });
 
 test('missing installer or desktop code fails lightweight publication verification', () => {
-  for (const path of ['scripts/desktop-runtime.mjs', 'lib/desktop-runtime.js', 'desktop/main.cjs', 'cordis.patch.yml']) {
+  for (const path of ['scripts/desktop-runtime.mjs', 'lib/desktop-runtime.js', 'desktop/main.cjs', 'desktop/idol-picker.js', 'cordis.patch.yml']) {
     const value = report(); value.files = value.files.filter(file => file.path !== path);
     assert.throws(() => verifyLightweightReport(value), /Missing lightweight package component/);
   }

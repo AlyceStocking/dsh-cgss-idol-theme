@@ -9,7 +9,7 @@ const managedNames = ['lib', 'desktop', 'scripts', 'package.json', 'cordis.patch
 export const requiredSourceFiles = [
   'package.json', 'cordis.patch.yml', 'scripts/desktop-runtime.mjs', 'lib/desktop-runtime.js',
   'lib/index.js', 'lib/client.js', 'lib/assets.js', 'lib/characters.js', 'lib/desktop-state.js', 'lib/desktop-process.js',
-  'desktop/main.cjs', 'desktop/preload.cjs', 'desktop/index.html', 'desktop/style.css', 'desktop/renderer.js', 'desktop/logic.js', 'desktop/sprite-cache.js',
+  'desktop/main.cjs', 'desktop/preload.cjs', 'desktop/index.html', 'desktop/style.css', 'desktop/renderer.js', 'desktop/logic.js', 'desktop/sprite-cache.js', 'desktop/idol-picker.js',
   ...[
     'CGSS Idol Desktop.exe', 'resources/app.asar', 'resources.pak', 'icudtl.dat', 'ffmpeg.dll',
     'chrome_100_percent.pak', 'chrome_200_percent.pak', 'snapshot_blob.bin', 'v8_context_snapshot.bin',

@@ -1,5 +1,6 @@
 import { CHARACTER_LIST, DEFAULT_APPEARANCE, getCharacter, normalizeAppearance, spriteUrl, PLACEHOLDER, createLinePicker, visualOf, sceneText, matchesCharacter } from '../lib/characters.js';
 import { createSpriteCache } from './sprite-cache.js';
+import { createIdolPicker } from './idol-picker.js';
 
 const api = window.yukimiDesktop;
 const settingsOnly = api.mode === 'settings';
@@ -62,6 +63,8 @@ function setPreferences(patch) {
   const request = ++appearanceRequest;
   const original = { characterId: preferences.characterId, cardIndex: preferences.cardIndex, petitIndex: preferences.petitIndex };
   const next = normalizeAppearance(patch, preferences);
+  // A newer outfit/pose request cancels any optimistic character choice, too.
+  idolPicker.setSelected(next.characterId);
   element('character-status').textContent = '加载中…';
   const anim = element('character-anim');
   if (anim) {
@@ -78,7 +81,7 @@ function setPreferences(patch) {
     } else {
       element('character-status').textContent = '加载失败，已保留当前角色';
       if (anim) anim.hidden = true;
-      element('character-select').value = preferences.characterId;
+      idolPicker.setSelected(preferences.characterId, true);
     }
   });
 }
@@ -93,7 +96,7 @@ function refreshPreferences() {
     if (source) stamp.src = source; else stamp.removeAttribute('src');
   }
   pet.setAttribute?.("aria-label", "与" + character.name + "互动；双击换装，长按设置");
-  if (renderedCharacter !== character.id) { renderedCharacter = character.id; renderChoices(); renderCharacterOptions(); }
+  if (renderedCharacter !== character.id) { renderedCharacter = character.id; renderChoices(); idolPicker.setSelected(character.id, true); }
   const url = spriteUrl(preferences);
   if (requestedSpriteUrl !== url) {
     requestedSpriteUrl = url;
@@ -220,7 +223,7 @@ function interact() {
   const speaker = getCharacter(preferences.characterId);
   say(nextLine(speaker, speaker.outfitIds[preferences.cardIndex]));
 }
-function setPanel(open) { api.panel(open); }
+function setPanel(open) { idolPicker.close(); api.panel(open); }
 let panelDragging = false;
 const panelHeader = element('settings-header');
 panelHeader.addEventListener('pointerdown', event => {
@@ -248,16 +251,14 @@ for (const card of CARDS) {
   button.append(image); button.addEventListener('click', () => setPreferences({ bg: card.url })); element('backgrounds').append(button);
 }
 }
-function renderCharacterOptions() {
-  const query = (element('character-search').value || '').trim().toLowerCase();
-  const options = CHARACTER_LIST.filter(character => character.id === preferences.characterId || matchesCharacter(character, query)).map(character => {
-    const option = document.createElement('option'); option.value = character.id; option.textContent = character.name + (character.available === false ? '（待收录）' : ''); option.disabled = character.available === false; return option;
-  });
-  element('character-select').replaceChildren(...options);
-  element('character-select').value = preferences.characterId;
-}
-element('character-search').addEventListener('input', renderCharacterOptions);
-element('character-select').addEventListener('change', () => setPreferences({ characterId: element('character-select').value }));
+let favoriteStorage;
+try { favoriteStorage = window.localStorage; } catch { /* Storage can be disabled by the runtime. */ }
+const idolPicker = createIdolPicker({
+  root: element('idol-picker'), input: element('character-search'), list: element('character-options'),
+  favorite: element('character-favorite'), empty: element('character-empty'),
+  characters: CHARACTER_LIST, matches: matchesCharacter, selectedId: preferences.characterId,
+  storage: favoriteStorage, onSelect: characterId => setPreferences({ characterId }),
+});
 pet.addEventListener('error', () => { element('fallback').hidden = false; });
 pet.addEventListener('dragstart', event => event.preventDefault());
 pet.addEventListener('pointerdown', event => {
@@ -286,7 +287,7 @@ function cancelPointer() { clearTimeout(longPressTimer); if (pointer?.dragging) 
 pet.addEventListener('pointercancel', cancelPointer);
 window.addEventListener('blur', cancelPointer);
 document.addEventListener('keydown', event => {
-  if (event.key === 'Escape') setPanel(false);
+  if (event.key === 'Escape' && !event.isComposing && event.keyCode !== 229) setPanel(false);
   if (event.target === pet && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); interact(); }
   if (event.target === pet && event.key === 'ContextMenu') { event.preventDefault(); setPanel(); }
 });

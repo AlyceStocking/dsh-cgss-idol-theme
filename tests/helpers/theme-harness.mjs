@@ -15,7 +15,7 @@ export function loadTheme(options = {}) {
   const slots = { inject: (_, fn) => fn(), register: (spec, component) => registrations.push({ spec, component }) };
   vm.runInNewContext(readFileSync(new URL('../../lib/client.js', import.meta.url), 'utf8'), {
     AbortController,
-    window: { matchMedia: () => media, __ModuleLoader__: { load: entry => { plugin = entry.factory(() => ({ createElement: (type, props, ...children) => ({ type, props, children }), Fragment: 'fragment' })); } } },
+    window: { matchMedia: () => media, ...options.browserWindow, __ModuleLoader__: { load: entry => { plugin = entry.factory(() => ({ createElement: (type, props, ...children) => ({ type, props, children }), Fragment: 'fragment', ...options.react })); } } },
     document: {
       createElement: () => { const tag = { dataset: {}, remove: () => styles.delete(tag) }; return tag; },
       head: { appendChild: tag => styles.add(tag) },
