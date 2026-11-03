@@ -8,6 +8,8 @@ This is the original `dsh-yukimi-theme` repository with `dsh-idol-theme` integra
 
 ## Features and coverage
 
+- **Companion startup fix (1.3.3):** Fixes valid standalone runtimes being reported as missing inside the DSH Electron Host. Physical runtime verification uses Electron `original-fs`, preserving hash and path checks without changing global ASAR behavior. Existing valid Electron 44.5.1 caches can be reused; fully restart the Host after updating.
+
 - **Idol search and favorites (1.3.2):** Both Web and Windows settings use one searchable dropdown. Filter by name or romanization, and use the five-point star beside it to favorite the current idol. Favorites have an orange filled star, are marked in the dropdown, and appear first while preserving catalog order within each group. Arrow keys, Enter and Escape are supported. Favorites persist in local storage for each surface; Web and desktop favorites are not shared.
 
 - **190 listed idols, 188 selectable.** Takumi Mukai and Tomoe Murakami remain disabled because the metadata collection returned HTTP 567, not because they are known to lack assets. Eight outfits without matching icon metadata are also excluded. See the [roster report](research/roster/README.md) and [coverage exceptions](research/roster/coverage.json).
@@ -54,21 +56,21 @@ dsh plugin --profile web remove dsh-yukimi-theme
 dsh plugin --profile web remove dsh-idol-theme
 ~~~
 
-### Lightweight npm package (1.3.2)
+### Lightweight npm package (1.3.3)
 
 The lightweight package contains all Web theme and companion code, **but no Electron binaries**. Web users do not need the companion runtime; Windows x64 companion users must install it explicitly after installing the plugin. There is no `postinstall`, and plugin startup never downloads Electron automatically.
 
 - npm page: <https://www.npmjs.com/package/dsh-cgss-idol-theme>
-- 1.3.2 registry tarball: <https://registry.npmjs.org/dsh-cgss-idol-theme/-/dsh-cgss-idol-theme-1.3.2.tgz>
+- 1.3.3 registry tarball: <https://registry.npmjs.org/dsh-cgss-idol-theme/-/dsh-cgss-idol-theme-1.3.3.tgz>
 - **Check the npm page/registry for published versions. If the specified version returns 404, use the GitHub installation below first.** A version in the repository does not by itself prove npm publication.
 
 Choose the profile you actually use; for desktop installation, use **DSH Desktop's own CLI**:
 
 ~~~sh
 # Web theme
-dsh plugin --profile web add dsh-cgss-idol-theme@1.3.2
+dsh plugin --profile web add dsh-cgss-idol-theme@1.3.3
 # Windows companion (also requires the runtime step below)
-dsh plugin --profile desktop add dsh-cgss-idol-theme@1.3.2
+dsh plugin --profile desktop add dsh-cgss-idol-theme@1.3.3
 ~~~
 
 ### Lightweight package: explicitly install the Windows companion runtime
@@ -76,15 +78,15 @@ dsh plugin --profile desktop add dsh-cgss-idol-theme@1.3.2
 On Windows x64, with Node.js **22.12.0 or newer** and npm, explicitly run:
 
 ~~~powershell
-npx --yes --package=dsh-cgss-idol-theme@1.3.2 dsh-cgss-idol-runtime install
-npx --yes --package=dsh-cgss-idol-theme@1.3.2 dsh-cgss-idol-runtime status
+npx --yes --package=dsh-cgss-idol-theme@1.3.3 dsh-cgss-idol-runtime install
+npx --yes --package=dsh-cgss-idol-theme@1.3.3 dsh-cgss-idol-runtime status
 ~~~
 
 If the Host uses a custom `DSH_HOME`, installation and status checks must target the same directory, for example:
 
 ~~~powershell
-npx --yes --package=dsh-cgss-idol-theme@1.3.2 dsh-cgss-idol-runtime install --dsh-home "D:\DSHData"
-npx --yes --package=dsh-cgss-idol-theme@1.3.2 dsh-cgss-idol-runtime status --dsh-home "D:\DSHData"
+npx --yes --package=dsh-cgss-idol-theme@1.3.3 dsh-cgss-idol-runtime install --dsh-home "D:\DSHData"
+npx --yes --package=dsh-cgss-idol-theme@1.3.3 dsh-cgss-idol-runtime status --dsh-home "D:\DSHData"
 ~~~
 
 The runtime is pinned to Electron **44.5.1 / Windows x64**, stored under `$DSH_HOME/idol-desktop/runtimes/electron-44.5.1-win32-x64/` (`DSH_HOME` defaults to `~/.dsh`), not an npx temporary directory. A valid cache of the same version is reused without downloading again. Currently, every `status` check and every Host startup that resolves the cache reads and SHA-256-verifies each file across the entire Electron cache (roughly several hundred MB). This verification is offline, but incurs disk I/O on every check/startup, not just the first validation. After installation and verification with `status`, check activation switches and **fully restart DSH Desktop and its Host**. The Host uses Electron from this fixed cache to run [desktop/main.cjs](<desktop/main.cjs>) from the currently installed plugin; retaining an npx temporary directory is unnecessary.
@@ -92,12 +94,12 @@ The runtime is pinned to Electron **44.5.1 / Windows x64**, stored under `$DSH_H
 Use `--archive` with a previously downloaded [official Electron zip](https://github.com/electron/electron/releases/download/v44.5.1/electron-v44.5.1-win32-x64.zip) for offline runtime installation:
 
 ~~~powershell
-npx --yes --package=dsh-cgss-idol-theme@1.3.2 dsh-cgss-idol-runtime install --archive "D:\Downloads\electron-v44.5.1-win32-x64.zip" --dsh-home "D:\DSHData"
+npx --yes --package=dsh-cgss-idol-theme@1.3.3 dsh-cgss-idol-runtime install --archive "D:\Downloads\electron-v44.5.1-win32-x64.zip" --dsh-home "D:\DSHData"
 ~~~
 
 Online downloads and `--archive` must both pass the same pinned SHA-256 check: `9b382492dcfee91f8f9e92c91f7972550a1b95d2299cac72279dab33a600d7db`, from the [official v44.5.1 SHASUMS256.txt](https://github.com/electron/electron/releases/download/v44.5.1/SHASUMS256.txt). `--archive` only avoids downloading the runtime; the npm package and dependencies needed by npx must also be cached to run fully offline.
 
-**A smaller npm download does not mean a smaller total companion disk footprint**: first use still requires a separate Electron download and extraction. This explicit-install/cache-loading workflow has not yet been validated in a live DSH GUI; CLI installation success is not live companion acceptance. While npm is unavailable, use GitHub for the Web theme, or the published v1.3.0 complete package/source-build workflow below for the companion.
+**A smaller npm download does not mean a smaller total companion disk footprint**: first use still requires a separate Electron download and extraction. Version 1.3.3 has launched the companion to `BRIDGE_READY` and shut it down cleanly under the actual DSH Electron executable using isolated preferences. Live user-session GUI interactions have not been exhaustively tested; CLI `Ready` alone is not companion startup acceptance. While npm is unavailable, use GitHub for the Web theme, or the published v1.3.0 complete package/source-build workflow below for the companion.
 
 ### GitHub Web theme installation (when npm is unavailable)
 

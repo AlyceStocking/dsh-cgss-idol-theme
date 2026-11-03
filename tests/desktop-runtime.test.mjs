@@ -267,6 +267,27 @@ test('CLI parses explicit paths and status never invokes installation', async t 
   assert.equal(await runCli(['--help'], { log }), 0);
 });
 
+test('Electron Host validates physical ASAR bytes and still rejects modified runtime files', { skip: !process.env.DSH_TEST_ELECTRON }, async t => {
+  const f = await fixture(t);
+  const installed = await installRuntime(f.options, f.dependencies);
+  const script = path.join(f.root, 'electron-probe.mjs');
+  const moduleUrl = new URL('../lib/desktop-runtime.js', import.meta.url).href;
+  await writeFile(script, `import { findCachedRuntime } from ${JSON.stringify(moduleUrl)};
+console.log(JSON.stringify({ electron: process.versions.electron, executable: findCachedRuntime(${JSON.stringify(f.options)}) }));
+`);
+  const invoke = () => {
+    const result = spawnSync(process.env.DSH_TEST_ELECTRON, ['--expose-internals', script], { encoding: 'utf8', timeout: 30000, env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' } });
+    assert.ifError(result.error);
+    assert.equal(result.status, 0, result.stderr);
+    const output = JSON.parse(result.stdout.trim());
+    assert.ok(output.electron, 'must exercise a real Electron Host, not ordinary Node');
+    return output.executable;
+  };
+  assert.equal(invoke(), installed.executable);
+  await writeFile(path.join(f.directory, 'resources/default_app.asar'), 'modified archive bytes');
+  assert.equal(invoke(), null, 'ASAR bypass must preserve physical file integrity validation');
+});
+
 test('CLI subprocess reports status and checksum failures without network', async t => {
   const f = await fixture(t), script = fileURLToPath(new URL('../scripts/desktop-runtime.mjs', import.meta.url));
   const invoke = args => spawnSync(process.execPath, [script, ...args], { encoding: 'utf8' });
